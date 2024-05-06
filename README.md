@@ -5,10 +5,11 @@ https://github.com/f1db/f1db
 Estrarre più informazioni in minor tempo possibile 
 
 ### DATA IDEAs
-- Mappa del mondo con nazionalità dei piloti (vedere chi ha più piloti, / chi dovrebbe investire nel motorsport
+- Mappa del mondo con nazionalità dei piloti (vedere chi ha più piloti, / chi dovrebbe investire nel motorsport)
 - Andamento nel tempo della classifica piloti/costruttori di un singolo pilota/team
 - Andamento nel tempo del tempo pole per un determinato circuito
 - Storia delle scuderie (minardi > toro rosso > alpha tauri > vcarb)
+- Andamento # gare a stagione negli anni
 - [...]
 
 ### PPT
