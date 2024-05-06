@@ -10,6 +10,7 @@ Estrarre più informazioni in minor tempo possibile
 - Andamento nel tempo del tempo pole per un determinato circuito
 - Storia delle scuderie (minardi > toro rosso > alpha tauri > vcarb)
 - Andamento # gare a stagione negli anni
+- A partire dall'anno di un grafico, visualizzare le informazioni su quest'ultimo ("zoom sul punto")
 - [...]
 
 ### PPT
