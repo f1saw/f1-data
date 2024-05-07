@@ -10,7 +10,9 @@ Estrarre più informazioni in minor tempo possibile
 - Andamento nel tempo del tempo pole per un determinato circuito
 - Storia delle scuderie (minardi > toro rosso > alpha tauri > vcarb)
 - Andamento # gare a stagione negli anni
-- A partire dall'anno di un grafico, visualizzare le informazioni su quest'ultimo ("zoom sul punto")
+- A partire dall'anno di un grafico (storico andamento pilota in campionato su più anni), clicco su un piazzamento e vedo le informazioni di quell'anno ("zoom sul punto")
+- correlazione vincitore corsa e vincitore driver of the day 
+- Età media dei piloti negli anni + pilota più giovane e più vecchio 
 - [...]
 
 ### PPT
