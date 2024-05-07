@@ -1,0 +1,78 @@
+"id","name","fullName","previousNames","type","placeName","countryId","latitude","longitude","totalRacesHeld"
+"adelaide","Adelaide","Adelaide Street Circuit",,"STREET","Adelaide","australia",-34.927222,138.617222,11
+"aida","Aida","Okayama International Circuit","TI Circuit Aida","RACE","Aida","japan",34.915,134.221111,2
+"ain-diab","Ain-Diab","Ain-Diab Circuit",,"ROAD","Casablanca","morocco",33.578611,-7.6875,1
+"aintree","Aintree","Aintree Motor Racing Circuit",,"ROAD","Aintree","united-kingdom",53.476944,-2.940556,5
+"anderstorp","Anderstorp Raceway","Anderstorp Raceway","Scandinavian Raceway","RACE","Anderstorp","sweden",57.264167,13.601389,6
+"austin","Americas","Circuit of the Americas",,"RACE","Austin","united-states-of-america",30.132778,-97.641111,11
+"avus","AVUS","AVUS",,"ROAD","Berlin","germany",52.480556,13.251389,1
+"bahrain","Bahrain","Bahrain International Circuit",,"RACE","Sakhir","bahrain",26.0325,50.510556,21
+"baku","Baku","Baku City Circuit",,"STREET","Baku","azerbaijan",40.3725,49.853333,7
+"brands-hatch","Brands Hatch","Brands Hatch",,"RACE","Fawkham","united-kingdom",51.356667,0.2625,14
+"bremgarten","Bremgarten","Circuit Bremgarten",,"ROAD","Bern","switzerland",46.95,7.410833,5
+"buddh","Buddh","Buddh International Circuit",,"RACE","Greater Noida","india",28.350556,77.535,3
+"buenos-aires","Juan y Oscar Gálvez","Autódromo Juan y Oscar Gálvez","Autódromo 17 de Octubre;Autódromo Municipal Ciudad de Buenos Aires;Autódromo Municipal del Parque Almirante Brown de la Ciudad de Buenos Aires;Autódromo Oscar Alfredo Gálvez","RACE","Buenos Aires","argentina",-34.694272,-58.459347,20
+"bugatti","Bugatti","Bugatti Circuit",,"RACE","Le Mans","france",47.937694,0.225611,1
+"caesars-palace","Caesars Palace","Caesars Palace",,"STREET","Las Vegas","united-states-of-america",36.116944,-115.175,2
+"catalunya","Catalunya","Circuit de Barcelona-Catalunya",,"RACE","Montmeló","spain",41.57,2.261111,33
+"clermont-ferrand","Charade","Charade Circuit",,"ROAD","Clermont-Ferrand","france",45.747222,3.038889,4
+"dallas","Fair Park","Fair Park",,"STREET","Dallas","united-states-of-america",32.781944,-96.765556,1
+"detroit","Detroit","Detroit Street Circuit",,"STREET","Detroit","united-states-of-america",42.32975,-83.040111,7
+"dijon","Dijon-Prenois","Dijon-Prenois",,"RACE","Dijon","france",47.3625,4.899167,6
+"donington","Donington Park","Donington Park",,"RACE","Leicestershire","united-kingdom",52.829806,-1.379556,1
+"east-london","Prince George","Prince George Circuit",,"RACE","East London","south-africa",-33.048611,27.873611,3
+"estoril","Estoril","Autódromo do Estoril",,"RACE","Estoril","portugal",38.750833,-9.394167,13
+"fuji","Fuji","Fuji Speedway",,"RACE","Oyama","japan",35.371667,138.926667,4
+"hockenheimring","Hockenheimring","Hockenheimring",,"RACE","Hockenheim","germany",49.327778,8.565833,37
+"hungaroring","Hungaroring","Hungaroring",,"RACE","Budapest","hungary",47.582222,19.251111,38
+"imola","Enzo e Dino Ferrari","Autodromo Internazionale Enzo e Dino Ferrari","Autodromo Dino Ferrari","RACE","Imola","italy",44.341111,11.713333,30
+"indianapolis","Indianapolis","Indianapolis Motor Speedway",,"RACE","Indianapolis","united-states-of-america",39.798333,-86.232778,19
+"interlagos","José Carlos Pace","Autódromo José Carlos Pace","Interlagos","RACE","São Paulo","brazil",-23.701111,-46.697222,40
+"istanbul","Istanbul Park","Istanbul Park","Istanbul Otodrom","RACE","Istanbul","turkey",40.951667,29.405,9
+"jacarepagua","Nelson Piquet","Autódromo Internacional Nelson Piquet","Jacarepaguá","RACE","Rio de Janeiro","brazil",-22.975556,-43.395,10
+"jarama","Jarama","Circuito del Jarama","Circuito Permanente del Jarama","RACE","Madrid","spain",40.617111,-3.585583,9
+"jeddah","Jeddah","Jeddah Corniche Circuit",,"STREET","Jeddah","saudi-arabia",21.543333,39.172778,4
+"jerez","Jerez","Circuito de Jerez","Circuito Permanente de Jerez","RACE","Jerez de la Frontera","spain",36.708333,-6.034167,7
+"kyalami","Kyalami","Kyalami Racing Circuit",,"RACE","Midrand","south-africa",-25.998611,28.068889,20
+"las-vegas","Las Vegas","Las Vegas Street Circuit",,"STREET","Las Vegas","united-states-of-america",36.175,-115.136389,1
+"long-beach","Long Beach","Long Beach",,"STREET","Long Beach","united-states-of-america",33.766389,-118.192778,8
+"losail","Losail","Losail International Circuit",,"RACE","Lusail","qatar",25.49,51.454167,2
+"magny-cours","Magny-Cours","Circuit de Nevers Magny-Cours",,"RACE","Nevers","france",46.863242,3.164228,18
+"marina-bay","Marina Bay","Marina Bay Street Circuit",,"STREET","Singapore","singapore",1.291531,103.86385,14
+"melbourne","Melbourne","Melbourne Grand Prix Circuit","Albert Park Circuit","STREET","Melbourne","australia",-37.849722,144.968333,27
+"mexico-city","Hermanos Rodríguez","Autódromo Hermanos Rodríguez","Autódromo Ricardo Rodríguez","RACE","Mexico City","mexico",19.404197,-99.088747,23
+"miami","Miami","Miami International Autodrome",,"STREET","Miami Gardens","united-states-of-america",25.958056,-80.238889,3
+"monaco","Monaco","Circuit de Monaco",,"STREET","Monte Carlo","monaco",43.734722,7.420556,69
+"monsanto","Monsanto","Circuito de Monsanto",,"STREET","Lisbon","portugal",38.719722,-9.203056,1
+"mont-tremblant","Mont-Tremblant","Circuit Mont-Tremblant",,"RACE","Mont-Tremblant","canada",46.187707,-74.609936,2
+"montjuic","Montjuïc","Circuito de Montjuïc",,"STREET","Barcelona","spain",41.366389,2.151667,4
+"montreal","Gilles Villeneuve","Circuit Gilles Villeneuve","Île Notre-Dame Circuit","STREET","Montreal","canada",45.500578,-73.522461,42
+"monza","Monza","Autodromo Nazionale Monza",,"RACE","Monza","italy",45.620556,9.289444,73
+"mosport","Mosport","Canadian Tire Motorsport Park","Mosport Park;Mosport International Raceway","RACE","Bowmanville","canada",44.05,-78.677778,8
+"mugello","Mugello","Autodromo Internazionale del Mugello",,"RACE","Scarperia e San Piero","italy",43.9975,11.371944,1
+"nivelles","Nivelles-Baulers","Nivelles-Baulers",,"RACE","Nivelles","belgium",50.621111,4.326944,2
+"nurburgring","Nürburgring","Nürburgring",,"RACE","Nürburg","germany",50.335556,6.9475,41
+"paul-ricard","Paul Ricard","Circuit Paul Ricard",,"RACE","Le Castellet","france",43.250556,5.791667,18
+"pedralbes","Pedralbes","Pedralbes Circuit",,"STREET","Barcelona","spain",41.390278,2.116667,2
+"pescara","Pescara","Pescara Circuit",,"ROAD","Pescara","italy",42.475,14.150833,1
+"phoenix","Phoenix","Phoenix Street Circuit",,"STREET","Phoenix","united-states-of-america",33.447917,-112.074583,3
+"portimao","Portimão","Algarve International Circuit",,"RACE","Portimão","portugal",37.221944,-8.629444,2
+"porto","Boavista","Circuito da Boavista",,"STREET","Porto","portugal",41.170472,-8.67325,2
+"reims","Reims-Gueux","Reims-Gueux",,"ROAD","Reims","france",49.254075,3.930561,11
+"riverside","Riverside","Riverside International Raceway",,"RACE","Riverside","united-states-of-america",33.937,-117.272556,1
+"rouen","Rouen-Les-Essarts","Rouen-Les-Essarts",,"ROAD","Rouen","france",49.330639,1.004583,5
+"sebring","Sebring","Sebring International Raceway",,"ROAD","Sebring","united-states-of-america",27.454741,-81.348267,1
+"sepang","Sepang","Sepang International Circuit",,"RACE","Sepang","malaysia",2.760556,101.7375,19
+"shanghai","Shanghai","Shanghai International Circuit",,"RACE","Shanghai","china",31.338889,121.219722,17
+"silverstone","Silverstone","Silverstone Circuit",,"RACE","Silverstone","united-kingdom",52.078611,-1.016944,58
+"sochi","Sochi","Sochi Autodrom","Sochi International Street Circuit;Sochi Olympic Park Circuit","ROAD","Sochi","russia",43.410278,39.968271,8
+"spa-francorchamps","Spa-Francorchamps","Circuit de Spa-Francorchamps",,"RACE","Spa","belgium",50.437222,5.971389,56
+"spielberg","Red Bull Ring","Red Bull Ring","Österreichring;A1-Ring","RACE","Spielberg","austria",47.219722,14.764722,37
+"suzuka","Suzuka","Suzuka Circuit",,"RACE","Suzuka","japan",34.843056,136.540556,34
+"valencia","Valencia","Valencia Street Circuit",,"STREET","Valencia","spain",39.458778,-0.325556,5
+"watkins-glen","Watkins Glen","Watkins Glen International",,"RACE","Watkins Glen","united-states-of-america",42.336944,-76.927222,20
+"yas-marina","Yas Marina","Yas Marina Circuit",,"RACE","Abu Dhabi","united-arab-emirates",24.467222,54.603056,15
+"yeongam","Korea","Korea International Circuit",,"RACE","Yeongam","south-korea",34.733333,126.416667,4
+"zandvoort","Zandvoort","Circuit Park Zandvoort",,"RACE","Zandvoort","netherlands",52.388819,4.540922,33
+"zeltweg","Zeltweg","Zeltweg",,"ROAD","Zeltweg","austria",47.202222,14.742222,1
+"zolder","Zolder","Circuit Zolder",,"RACE","Heusden-Zolder","belgium",50.988889,5.255556,10
