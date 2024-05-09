@@ -1,6 +1,8 @@
 # f1-data
 https://github.com/f1db/f1db
 
+( AGGIUNGERE SUBFOLDER => to keep data-repo updated )
+
 ### GOAL
 Estrarre più informazioni in minor tempo possibile 
 
