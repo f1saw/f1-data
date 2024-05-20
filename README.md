@@ -9,6 +9,8 @@ https://github.com/f1db/f1db
     | es. il team del pilota campione del mondo vince anche i costruttori ?
     ( da fare potendo selezionare il range di anni da tenere in considerazioni )
 
+-> x visualizzazione => utilizzare dizionario come in 12-penguins
+
 ### GOAL
 Estrarre più informazioni in minor tempo possibile 
 
