@@ -11,6 +11,8 @@ https://github.com/f1db/f1db
 
 -> x visualizzazione => utilizzare dizionario come in 12-penguins
 
+controllare che non ci siano errori quando tolgo i valori da dropdown (plotly vuole stampare None)
+
 ### GOAL
 Estrarre più informazioni in minor tempo possibile 
 
