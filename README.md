@@ -1,7 +1,13 @@
 # f1-data
 https://github.com/f1db/f1db
 
-( AGGIUNGERE SUBFOLDER => to keep data-repo updated )
+-> avendo principalmente variabili numeriche (e non tante categoriali)
+  => suggerimento di implementare un grafico per implementare la correlazione (dashboard di esempio es.12-penguins) 
+    | es. chi ha il maggior # vittorie in una stagione diventa campione del mondo ?
+    | es. chi ha vinto le prime X gare diventa campione del mondo ?
+    | es. la squadra che maggior # di 1-2 in una stagione diventa campione dei costruttori ?
+    | es. il team del pilota campione del mondo vince anche i costruttori ?
+    ( da fare potendo selezionare il range di anni da tenere in considerazioni )
 
 ### GOAL
 Estrarre più informazioni in minor tempo possibile 
