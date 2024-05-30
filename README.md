@@ -18,6 +18,7 @@ Estrarre più informazioni in minor tempo possibile
 
 ### DATA IDEAs
 - Mappa del mondo con nazionalità dei piloti (vedere chi ha più piloti, / chi dovrebbe investire nel motorsport)
+- Mappa del mondo per vedere la distribuzione della posizione delle gare (Continenti) al variare degli anni => vedere i paesi che stanno investendo recentemente in motorsport
 - Andamento nel tempo della classifica piloti/costruttori di un singolo pilota/team
 - Andamento nel tempo del tempo pole per un determinato circuito (colorare i punti in base a come erano le condizioni meteo (ottenute tramite api))
 - Storia delle scuderie (minardi > toro rosso > alpha tauri > vcarb)
