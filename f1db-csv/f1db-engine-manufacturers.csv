@@ -22,12 +22,12 @@
 "emw","EMW","germany",,24,,0,1,1,0,12,0,0,0,0,0
 "era","ERA","united-kingdom",,10,6,0,4,4,0,452,0,0,0,0,0
 "european","European","united-kingdom",11,17,9,0,17,17,0,1417,0,0,0,0,0
-"ferrari","Ferrari","italy",1,1,1,16,1084,1082,245,196527,819,623,10837.0,251,271
+"ferrari","Ferrari","italy",1,1,1,16,1087,1085,246,197580,822,625,10902.0,252,271
 "fondmetal","Fondmetal","italy",10,18,8,0,17,17,0,1755,0,0,0,0,0
 "ford","Ford","united-states-of-america",1,1,1,10,528,525,176,248791,533,289,4266.5,139,161
 "gordini","Gordini","france",,3,3,0,37,37,0,4498,2,2,0,0,1
 "hart","Hart","united-kingdom",5,1,2,0,158,145,0,11358,5,5,63,2,2
-"honda-rbpt","Honda RBPT","japan",1,1,1,1,28,28,25,6170,39,26,1143,20,14
+"honda-rbpt","Honda RBPT","japan",1,1,1,1,31,31,27,6912,41,28,1214,21,14
 "honda","Honda","japan",1,1,1,6,482,481,89,64365,223,164,3409.0,90,76
 "ilmor","Ilmor","united-kingdom",6,7,4,0,48,37,0,3642,0,0,12,0,0
 "jaguar","Jaguar","united-kingdom",,25,,0,1,1,0,17,0,0,0,0,0
@@ -42,7 +42,7 @@
 "matra","Matra","france",4,1,1,0,126,125,3,8305,24,24,173,4,6
 "mecachrome","Mecachrome","france",3,2,3,0,16,16,0,1727,3,3,38,0,0
 "megatron","Megatron","germany",5,5,3,0,32,32,0,4068,1,1,35,0,0
-"mercedes","Mercedes","germany",1,1,1,10,571,569,213,137246,585,401,13865.5,221,210
+"mercedes","Mercedes","germany",1,1,1,10,574,572,213,138848,589,404,14031.5,222,213
 "milano","Milano","italy",,11,,0,3,3,0,32,0,0,0,0,0
 "motori-moderni","Motori Moderni","italy",,11,8,0,46,43,0,1963,0,0,0,0,0
 "mugen-honda","Mugen-Honda","japan",3,1,1,0,147,147,4,13460,16,15,182,1,0
@@ -57,7 +57,7 @@
 "porsche","Porsche","germany",3,1,1,0,42,37,1,3580,5,5,46,1,0
 "pratt-whitney","Pratt & Whitney","united-states-of-america",,18,8,0,3,3,0,117,0,0,0,0,0
 "rbpt","RBPT","japan",1,1,1,1,22,22,17,4792,28,20,794,8,8
-"renault","Renault","france",1,1,1,12,732,729,169,130452,463,322,8142.5,213,176
+"renault","Renault","france",1,1,1,12,735,732,169,130793,463,322,8146.5,213,176
 "repco","Repco","australia",1,1,1,2,33,33,8,3550,25,17,115,7,4
 "sauber","Sauber","switzerland",7,5,4,0,16,16,0,1420,0,0,12,0,0
 "scarab","Scarab","united-states-of-america",,15,10,0,5,2,0,87,0,0,0,0,0
