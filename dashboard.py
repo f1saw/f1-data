@@ -1,8 +1,13 @@
+import sys
+import os
 import pandas as pd
 import plotly.express as px
 import dash
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+from drivers import *
 
 
 # chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura)
@@ -16,6 +21,37 @@ import dash_bootstrap_components as dbc
 # external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+
+
+# TODO => do useful structure like tabs = ["seasons": [array_of_graphs], "circuits": [array_of_graphs], ...]
+
+drivers_dfs = {
+    "numDriversPerYear": getNumDriversPerYear(),
+    "worldSpread": getWorldSpread()
+}
+df = px.data.gapminder()
+
+
+
+drivers_figures = {
+    "numDriversPerYear" : px.line(
+        drivers_dfs["numDriversPerYear"],
+        x = "year",
+        y = "officialDriver"
+    ),
+    "worldSpread": px.scatter_geo(
+        drivers_dfs["worldSpread"], 
+        locations="alpha3Code", 
+        color="continentId",
+        hover_name="name", 
+        size="count_display",
+        animation_frame="year",
+        projection="natural earth")
+    
+}
+# my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
+
 
 
 
@@ -82,12 +118,38 @@ def render_content(tab):
                     }
                 )
             ])
+            
+        # DRIVERS
+        case 'tab-2-drivers':
+            return html.Div([
+                html.H3('Tab content 2'),
+                dcc.Graph(id='line', figure=drivers_figures['numDriversPerYear']),
+                
+                dcc.Graph(id="world", figure=drivers_figures['worldSpread'])
+                
+            ])
         
         # DEFAULTS
         case _:
              return html.Div([])
          
-         
+xaxis_feature_dropdown = dcc.Dropdown(
+    id='xaxis-feature',
+    # options=[{'label': "dizionario_nomi[col]", 'value': col} for col in df_penguins.columns],
+    options="culmen_length_mm",
+    value='culmen_length_mm'  # Valore predefinito
+)
+
+"""
+@app.callback(Output('line','figure'), Input('xaxis_feature_dropdown', 'value'))
+def update_line(x):
+    fig = px.line(
+        drivers_dfs["numDriversPerYear"],
+        x = "year",
+        y = "officialDriver"
+    )
+    return fig """
+    
          
 if __name__ == '__main__':
     app.run(debug=True) # TODO => what does Debug=True do ??
