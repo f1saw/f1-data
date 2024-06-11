@@ -25,29 +25,93 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
 # TODO => do useful structure like tabs = ["seasons": [array_of_graphs], "circuits": [array_of_graphs], ...]
-
+# TODO => fare labels con dizionario e for figo
+# ["plotly", "plotly_white", "plotly_dark", "ggplot2", "seaborn", "simple_white", "none"]
+drivers_template = "plotly_dark"
+transparent_bg = {
+    "plot_bgcolor": "rgba(0,0,0,0)",
+    "paper_bgcolor": "rgba(0,0,0,0)"
+}
 drivers_dfs = {
     "numDriversPerYear": getNumDriversPerYear(),
     "worldSpread": getWorldSpread()
 }
-df = px.data.gapminder()
 
-
-
+driver_type = {
+    "officialDriver": "Official Driver",
+    "testDriver": "Test Driver"
+}
+"""continent_names = {
+    "europe": "Europe",
+    "north-america": "North America",
+    "australia": "Australia",
+    "africa": "Africa",
+    "antarctica": "Antarctica"
+}"""
 drivers_figures = {
     "numDriversPerYear" : px.line(
         drivers_dfs["numDriversPerYear"],
         x = "year",
-        y = "officialDriver"
+        y = ["officialDriver","testDriver"],
+        markers = True,
+        labels = {
+            "value": "Number of Drivers",
+            "variable": "Driver Type",
+            "year": "Year"
+        },
+        hover_data = {
+            "variable": False,
+            "year": False
+        },
+        template = drivers_template
+    ).for_each_trace(lambda t: t.update(name = driver_type[t.name]))
+    .update_layout(
+        transparent_bg,
+        title = {
+            "text": "Number of Official Drivers and Test Drivers Over the Years",
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 18 }
+        },
+        hovermode = "x"
     ),
     "worldSpread": px.scatter_geo(
         drivers_dfs["worldSpread"], 
-        locations="alpha3Code", 
-        color="continentId",
-        hover_name="name", 
-        size="count_display",
-        animation_frame="year",
-        projection="natural earth")
+        locations = "alpha3Code", 
+        color = "continentName",
+        hover_name = "countryName", 
+        size = "count_display",
+        animation_frame = "year",
+        projection = "natural earth",
+        labels = {
+            "continentName": "Continent",
+            "year": "Year",
+            "count_display": "Number of Drivers"
+        },
+        hover_data = {
+            "alpha3Code": False,
+            "year": False
+        },
+        category_orders = {
+            # "continentName": ["Europe"]
+        },
+        template = drivers_template
+    ).update_layout(
+        transparent_bg,
+        height=500,
+        title = {
+            "text": "Spread of Drivers Nationalities Over the Years",
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 18 }
+        },
+    ).update_geos(
+        bgcolor="rgba(0,0,0,0)",
+        showland=True, landcolor="rgb(200,212,227)",
+        resolution=110
+    )
     
 }
 # my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])

@@ -6,6 +6,7 @@ drivers_csv = 'drivers.csv'
 seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 drivers_info = 'f1db-drivers.csv'
 countries = 'f1db-countries.csv'
+continents = 'f1db-continents.csv'
 
 def getNumDriversPerYear():
     df = pd.read_csv(f"{folder}/{seasons_entrants_drivers}")
@@ -23,14 +24,16 @@ def getNumDriversPerYear():
     # print(df_by_year.tail())
     # print(df_test_drivers_by_year.tail())
     #print(pd.merge(df_by_year, df_test_drivers_by_year, on="year", how="outer"))
-    # return pd.merge(df_by_year, df_test_drivers_by_year, on="year", how="outer")
-    return df_by_year
+    return pd.merge(df_by_year, df_test_drivers_by_year, on="year", how="outer")
+    #return df_by_year
 
 
 def getWorldSpread():
+    # TODO => fare tramite for
     df_drivers_entrants = pd.read_csv(f"{folder}/{seasons_entrants_drivers}")
     df_drivers_info = pd.read_csv(f"{folder}/{drivers_info}")
     df_countries = pd.read_csv(f"{folder}/{countries}")
+    df_continents = pd.read_csv(f"{folder}/{continents}")
     
     df_drivers_entrants.drop(columns=df_drivers_entrants.columns.difference(["year","driverId"]), inplace=True)
     #print(df_drivers_entrants.tail())
@@ -41,16 +44,21 @@ def getWorldSpread():
     #print(df_drivers_info.tail())
     
     df_countries.drop(columns=df_countries.columns.difference(["id", "alpha3Code", "name", "continentId"]), inplace=True)
-    df_countries.rename(columns={"id":"countryOfBirthCountryId"}, inplace=True)
-    #print(df_countries.tail())
+    df_countries.rename(columns={"id":"countryOfBirthCountryId", "name":"countryName"}, inplace=True)
+    # print(df_countries.tail())
+    
+    df_continents.drop(columns=df_continents.columns.difference(["id", "name"]), inplace=True)
+    df_continents.rename(columns={"id":"continentId","name":"continentName"},inplace=True)
+    # print(df_continents.tail())
     
     df_merged = pd.merge(df_drivers_entrants, df_drivers_info, on="driverId", how="left")
     df_merged = pd.merge(df_merged, df_countries, on="countryOfBirthCountryId", how="left")
+    df_merged = pd.merge(df_merged, df_continents, on="continentId", how="left")
     df_merged["count"] = df_merged.groupby(["year","alpha3Code"])["driverId"].transform("count")
     df_merged["count_display"] = df_merged["count"]
     df_merged.drop(columns=["driverId"], inplace=True)
     
 
-    print(df_merged.tail())
+    # print(df_merged.tail())
     
     return df_merged
