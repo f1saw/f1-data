@@ -1,6 +1,20 @@
 # f1-data
 https://github.com/f1db/f1db
 
+
+### TODO | MATTE
+- [ ] completare drivers (dropdown x trend)
+- [ ] sistemo codice x bene
+
+- [ ] add drivers' flag on the top of the bar chart
+- [ ] absolute => show only min value ; trend => show only select driver
+- [ ] bug with empty dataset
+
+- [ ] CIRCUITS
+
+
+==================================================================================
+
 -> avendo principalmente variabili numeriche (e non tante categoriali)
   => suggerimento di implementare un grafico per implementare la correlazione (dashboard di esempio es.12-penguins) 
     | es. chi ha il maggior # vittorie in una stagione diventa campione del mondo ?

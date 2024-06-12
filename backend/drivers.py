@@ -1,6 +1,7 @@
 import pandas as pd
+from datetime import datetime
 
-# find good way to make this var reusable
+# TODO => find good way to make this var reusable => put it into get-data.py
 folder = 'f1db-csv'
 drivers_csv = 'drivers.csv'
 seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
@@ -9,12 +10,22 @@ countries = 'f1db-countries.csv'
 continents = 'f1db-continents.csv'
 races_results = "f1db-races-race-results.csv"
 qualifying_results = 'f1db-races-qualifying-results.csv'
+seasons_driver_standings = "f1db-seasons-driver-standings.csv"
 
 class Drivers:
     MIN_VALUE_DEFAULT = 0
     COL_TO_APPLY_MIN_DEFAULT = "count_position_1"
-    PERFORMANCE_TYPE_DEFAULT = "wins"
+    PERFORMANCE_TYPE_DEFAULT = "wdcs"
+    MONTH_END_SEASON = 12
     
+    @staticmethod
+    def getDrivers():
+        df = pd.read_csv(f"{folder}/{drivers_info}")
+        df.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
+        df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True) # TODO => al più nazionalità
+        # print(df.head())
+        return df
+        
     @staticmethod
     def getNumDriversPerYear():
         df = pd.read_csv(f"{folder}/{seasons_entrants_drivers}")
@@ -75,16 +86,22 @@ class Drivers:
     
     @staticmethod
     def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
-        print("======================================")
-        df = pd.read_csv(f"{folder}/{races_results if performanceType == 'wins' else qualifying_results}")
+        #print("======================================")
+        performanceType2file = {
+            "wdcs": seasons_driver_standings,
+            "wins": races_results,
+            "podiums": races_results,
+            "poles": qualifying_results
+        }
+        df = pd.read_csv(f"{folder}/{performanceType2file[performanceType]}")
         df_drivers_info = pd.read_csv(f"{folder}/{drivers_info}")
         df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
         df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
-        df.drop(columns=df.columns.difference(["positionNumber","driverId"]), inplace=True)
+        df.drop(columns=df.columns.difference(["positionNumber","driverId","year"]), inplace=True)
         
+        #print(performanceType.upper())
         match performanceType:
-            case "wins":
-                print("RACE")
+            case "wins" | "podiums":
                 podium_mask = (df["positionNumber"] == 1) | (df["positionNumber"] == 2) | (df["positionNumber"] == 3)
                 df = df[podium_mask]
                 for place in [1,2,3]:
@@ -93,10 +110,15 @@ class Drivers:
                 df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
                 df.drop_duplicates(subset=["driverId","count_position_1","count_position_2","count_position_2"], inplace=True)
             
-            case "poles":
-                print("POLEEEEE")
-                pole_mask = df["positionNumber"] == 1
-                df = df[pole_mask]
+            case "wdcs" | "poles":
+                # If "WDCS" , current year must not count as won world driver championship, to take into account the data:
+                #  - "year" must be before current year (e.g. 2024)
+                #       (e.g. 1975 < 2024 | OK)
+                #       (e.g. 2024 < 2024 | NOT OK, season still running)
+                # OR - current month must be at the end of the season (e.g. in decemeber)
+                #       (e.g. season 2024 , current date Dec 2024 | OK, same year but season is over)
+                p1_mask = (df["positionNumber"] == 1) & ((df["year"] < datetime.now().year) | (datetime.now().month >= Drivers.MONTH_END_SEASON) if performanceType == "wdcs" else True)
+                df = df[p1_mask]
                 for place in [1]:
                     df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum())
                 df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
@@ -104,14 +126,20 @@ class Drivers:
                 #print(df.head())
             
             
-            
-            
-            
+        df.drop(columns=["year"], inplace=True)
         df = df[df[colToApplyMin] >= minValue]
         df.reset_index(inplace=True)
         df.drop(columns=["positionNumber","index"], inplace=True)
         df = pd.merge(df, df_drivers_info, on="driverId", how="left")
             
         
-        print(df.head())
+        #print(df.head())
         return df
+    
+    
+    @staticmethod
+    def getTrendPerformance(selected_driver, performance_type):
+        # TODO
+        print("======================================")
+        print(f"{selected_driver} - {performance_type}")
+        return []
