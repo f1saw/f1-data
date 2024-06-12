@@ -3,10 +3,23 @@ import plotly.express as px
 import dash
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
+import season
 
 
 # chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura)
 # leggere da ./f1db-csv/
+
+# SEASON DATA
+"""
+df_season_list = season.getSeasonData()
+
+df_season_list["df_season_costurct"] = df_season_list[0]
+df_season_list["df_season_driver"] = df_season_list[1]
+df_season_list["df_season_entrants_constructors"] = df_season_list[2]
+df_season_list["df_season_entrants_drivers"] = df_season_list[3]
+df_season_list["df_season_entrants_tyre"] = df_season_list[4]
+df_season_list["sdf_season_entrants"] = df_season_list[5]
+"""
 
 #### DATI OTTENUTI
 
@@ -15,8 +28,7 @@ import dash_bootstrap_components as dbc
 
 # external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
+app = Dash(__name__,suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
 # TABS STRUCTURE
@@ -32,6 +44,7 @@ for idx, tab in enumerate(tabs):
 
 
 # LAYOUT BUILDER
+
 app.layout = html.Div([
     html.H1('F1-DATA', className="text-center fw-bold m-3"),
     html.Div([
@@ -56,14 +69,16 @@ def render_content(tab):
         case 'tab-0-seasons':
             return html.Div([
                 html.H3('Tab content 1'),
-                dcc.Graph(
-                    figure={
-                        'data': [{
-                            'x': [1, 2, 3],
-                            'y': [3, 1, 2],
-                            'type': 'bar'
-                        }]
-                    }
+                season.createDropDown(),
+                html.Hr(),
+                html.Span(
+                    season.createRadioButtonDriver(),
+                    id="radio_button_sapn"
+                ),
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(id="season_graph", figure=season.createSeasonDriverPlot("positionNumber"))
+                    )
                 )
             ], className="d-flex flex-column justify-content-between gap-2")
             
@@ -87,7 +102,28 @@ def render_content(tab):
         case _:
              return html.Div([])
          
-         
-         
+@callback(Output('radio_button_sapn', 'children'),
+              Input('dropdown', 'value'))
+def update_graph(dropdown):
+    if (dropdown == "Season Gran Prix"):
+        return #season.createRadioButtonGP()
+    elif (dropdown == "Season Driver"):
+        return season.createRadioButtonDriver()
+    else:
+        return
+    
+
+@callback(Output('season_graph', 'figure'),
+              [Input('radio-input', 'value'),
+               Input('dropdown', 'value')])
+def update_graph(radio_value, dropdown_value):
+    if (dropdown_value == "Season Gran Prix"):
+        return season.createSeason_GP_Plot()
+    elif (dropdown_value == "Season Driver"):
+        return season.createSeasonDriverPlot(radio_value)  
+    else:
+        return season.createSeasonGeo()   
+
+        
 if __name__ == '__main__':
     app.run(debug=True) # TODO => what does Debug=True do ??
