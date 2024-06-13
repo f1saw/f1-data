@@ -77,23 +77,21 @@ def createRangeSlider():
                            id='range-slider'
                     )
 
-def createDropDownDrivers(slider_value):
+def createDropDownDrivers(slider_value=[1990, 1995]):
     data = getSeasonDrivingStanding()
-    print(slider_value)
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
     return dcc.Dropdown(
     id='dropdown_drivers',
     options = [{'label': value, 'value': value} for value in data_in_range ],
-    value=[data_in_range[0]],
+    value=['ayrton-senna', 'alain-prost'],
     multi=True,
     style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
     )
 
 def updateDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
-    print(slider_value)
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
@@ -121,9 +119,26 @@ def createDropDown():
     style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
 )
 
-def createSeasonDriverPlot(radio_button_value, slider_value, driver):
+def figDesign(fig):
+    transparent_bg = {
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "paper_bgcolor": "rgba(0,0,0,0)"
+    }
+
+    fig.update_layout(
+        transparent_bg,
+        height=400,
+        title = {
+            "text": "Total number of GP contested in F1 history",
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 18 }
+        })
+
+def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1990, 1995], driver=['ayrton-senna', 'alain-prost']):
     data = getSeasonDrivingStanding()
-    #TODO: far scegliere l'anno
+   
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     
     selected_drivers_mask = data_in_range["driverId"].isin(driver)
@@ -133,7 +148,10 @@ def createSeasonDriverPlot(radio_button_value, slider_value, driver):
     fig.update_xaxes(dtick=1, tickmode='linear')
     #fig = px.scatter(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId")
     if (radio_button_value == "positionNumber"):
-        fig.update_yaxes(autorange="reversed")
+        fig.update_yaxes(autorange="reversed", title_text='Position')
+    else:
+        fig.update_yaxes(title_text='Points')
+    figDesign(fig)
 
     return fig
 
@@ -148,6 +166,9 @@ def createSeason_GP_Plot():
     df_count.sort_values(by="year", inplace=True)
     
     fig = px.line(df_count, x="year", y="value", title="GP for year", height=400)
+    fig.update_yaxes(title_text='#GP')
+
+    figDesign(fig)
 
     return fig
 
@@ -171,6 +192,15 @@ def createSeasonGeo():
         
     
     df['count'] = df['count'].astype(str).astype(int)
+
+
     fig = px.scatter_geo(df, locations=df["code"], size="count", hover_data={"id" : True}, height=400)
+    figDesign(fig)
+
+    fig.update_geos(
+        bgcolor="rgba(0,0,0,0)",
+        showland=True, landcolor="rgb(200,212,227)",
+        resolution=110
+    ),
     
     return fig
