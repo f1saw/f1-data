@@ -2,33 +2,15 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
+import numpy as np
 
 import season
 import backend.drivers as drivers
+import backend.circuits as circuits
+import backend.f1db_utils as f1db_utils
 
-
-
-# chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
+# TODO chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
 # leggere da ./f1db-csv/
-
-# SEASON DATA
-"""
-df_season_list = season.getSeasonData()
-
-df_season_list["df_season_costurct"] = df_season_list[0]
-df_season_list["df_season_driver"] = df_season_list[1]
-df_season_list["df_season_entrants_constructors"] = df_season_list[2]
-df_season_list["df_season_entrants_drivers"] = df_season_list[3]
-df_season_list["df_season_entrants_tyre"] = df_season_list[4]
-df_season_list["sdf_season_entrants"] = df_season_list[5]
-"""
-
-#### DATI OTTENUTI
-
-
-#### CREAZIONE DASHBOARD
-
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -70,7 +52,7 @@ def getTitleObj(titleStr):
 
 
 
-# STATIC FIGURES
+# DRIVERS STATIC FIGURES (TODO => maybe put them in frontend file)
 drivers_figures = {
     "numDriversPerYear" : px.line(
         drivers.drivers_dfs["numDriversPerYear"],
@@ -154,7 +136,7 @@ app.layout = html.Div([
     html.H1('F1-DATA', className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
-            value=tabs_children[0].value, 
+            value=tabs_children[1].value, 
             children=tabs_children, 
             parent_className='custom-tabs', className='pt-5 custom-tabs-container',
             colors={
@@ -192,18 +174,28 @@ def render_content(tab):
         # CIRCUITS
         case 'tab-1-circuits':
             return html.Div([
-                html.H3('Tab content 2'),
-                dcc.Graph(
-                    id='graph-2-tabs-dcc',
-                    figure={
-                        'data': [{
-                            'x': [1, 2, 3],
-                            'y': [5, 10, 6],
-                            'type': 'bar'
-                        }]
-                    }
-                )
+                dbc.Row([
+                    dbc.Col(
+                        dbc.Stack([
+                            dbc.Row([
+                                dbc.Col(html.Label("Min Value"), width=2),
+                                dbc.Col(circuits.circuits_gp_held_min_value, width=7) 
+                            ], className="d-flex justify-content-center"),
+                            dcc.Graph(id="drivers-performance")
+                        ]), width=6),
+                    #dbc.Col(dcc.Graph(id="drivers-world", figure=drivers_figures['worldSpread']), width=6)
+                ]),
+                html.Br(),
+                dbc.Stack([
+                    dbc.Row([dbc.Col(circuits.circuits_dropdown, width=3)], className="d-flex justify-content-center"),
+                    dcc.Graph(id='circuits-qualifying', figure=drivers_figures['numDriversPerYear'])
+                ])
             ])
+            
+            
+            
+            
+            
             
         # DRIVERS
         case 'tab-2-drivers':
@@ -270,6 +262,69 @@ def update_graph(radio_value, dropdown_value, range_value, driver):
         return season.createSeasonGeo() 
 
 ####   
+
+
+
+
+
+
+
+
+# CIRCUITS
+@app.callback(
+    [Output("circuits-gp-held-min-value-id", "max"),
+    Output("circuits-gp-held-min-value-id", "marks")],
+    Input("circuits-gp-held", "figure"))
+def circuits_update_slider_marks(figure):
+    # LOOK AT MAX Y 
+    return 0
+
+
+@app.callback(
+    Output("circuits-qualifying", "figure"),
+     Input("circuits-dropdown", "value")
+)
+def circuits_update_qualifying(circuitsIds):
+    df = circuits.get_qualifying_times(circuitsIds)
+
+    # Generare i tickvals automaticamente
+    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=7, base=10)
+    ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
+    
+    return px.line(
+        df,
+        x = "year",
+        y = "timeMillis", # pole,
+        color = "circuitName",
+        markers = True,
+        labels = circuits.dict,
+        hover_data = {
+            "year": False,
+            "timeMillis": False,
+            "time": True,
+            #"officialName": True,
+            "qualifyingFormat": True,
+            "driverName": True
+        },
+        template = drivers_template
+    ).update_layout(
+        transparent_bg,
+        title = getTitleObj("Pole Lap Time Over the Years"),
+        hovermode = "x",
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext,
+            tickmode='array',
+            title="Lap Time"
+        )
+    ) if not df.empty else warning_empty_dataframe
+    #.for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name])
+
+
+
+
+
+
 
 
 @app.callback(
@@ -404,6 +459,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
     else:
         return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
     
+
       
 if __name__ == '__main__':
     app.run(debug=True) # TODO => what does Debug=True do ??

@@ -9,8 +9,12 @@ https://github.com/f1db/f1db
 - [ ] absolute => show only min value ; trend => show only select driver
 - [ ] bug with empty dataset
 - [ ] show total podiums count in absolute graph
-
-- [ ] CIRCUITS
+- [ ] how to put callbacks in different file
+- [ ] CIRCUITS:
+  #gp_held | ... ??qualifying_gap_comparison_between_1st_2nd?? ?? in a circuit, how many times who started on pole / 1st row ended up 1st
+  qualifying_laps
+  
+?? differenziazione ROAD|STREET|RACE circuiti negli anni ?? (come official e test drivers)
 
 - [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
 

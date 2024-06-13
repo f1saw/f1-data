@@ -2,21 +2,10 @@ import pandas as pd
 from datetime import datetime
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
-
 from collections import defaultdict
 
-# TODO => find good way to make this var reusable => put it into get-data.py
-folder = 'f1db-csv'
-drivers_csv = 'drivers.csv'
-seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
-drivers_info = 'f1db-drivers.csv'
-countries = 'f1db-countries.csv'
-continents = 'f1db-continents.csv'
-races_results = "f1db-races-race-results.csv"
-races = "f1db-races.csv"
-qualifying_results = 'f1db-races-qualifying-results.csv'
-seasons_driver_standings = "f1db-seasons-driver-standings.csv"
-grands_prix = "f1db-grands-prix.csv"
+import backend.f1db_utils as f1db_utils
+
 
 
 MIN_VALUE_DEFAULT = 0
@@ -46,10 +35,10 @@ drivers_dict = {
 }
 
 performanceType2file = {
-    "wdcs": seasons_driver_standings,
-    "wins": races_results,
-    "podiums": races_results,
-    "poles": qualifying_results
+    "wdcs": f1db_utils.seasons_driver_standings,
+    "wins": f1db_utils.races_results,
+    "podiums": f1db_utils.races_results,
+    "poles": f1db_utils.qualifying_results
 }
 
 performanceType2TimeAxis = {
@@ -83,7 +72,7 @@ def performanceType2Mask(df, performanceType):
 
 
 def getDrivers():
-    df = pd.read_csv(f"{folder}/{drivers_info}")
+    df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True) # TODO => al più nazionalità
     # print(df.head())
@@ -91,7 +80,7 @@ def getDrivers():
     
 
 def getNumDriversPerYear():
-    df = pd.read_csv(f"{folder}/{seasons_entrants_drivers}")
+    df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_entrants_drivers}")
     df.drop(columns=["entrantId","constructorId","engineManufacturerId","rounds","roundsText"], inplace=True)
     no_test_driver_mask = df["testDriver"] == False
     df_by_year = df[no_test_driver_mask].groupby(by=["year"]).count()
@@ -113,10 +102,10 @@ def getNumDriversPerYear():
 
 def getWorldSpread():
     # TODO => fare tramite for
-    df_drivers_entrants = pd.read_csv(f"{folder}/{seasons_entrants_drivers}")
-    df_drivers_info = pd.read_csv(f"{folder}/{drivers_info}")
-    df_countries = pd.read_csv(f"{folder}/{countries}")
-    df_continents = pd.read_csv(f"{folder}/{continents}")
+    df_drivers_entrants = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_entrants_drivers}")
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
+    df_countries = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.countries}")
+    df_continents = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.continents}")
     
     df_drivers_entrants.drop(columns=df_drivers_entrants.columns.difference(["year","driverId"]), inplace=True)
     #print(df_drivers_entrants.tail())
@@ -150,8 +139,8 @@ def getWorldSpread():
 
 def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     #print("======================================")
-    df = pd.read_csv(f"{folder}/{performanceType2file[performanceType]}")
-    df_drivers_info = pd.read_csv(f"{folder}/{drivers_info}")
+    df = pd.read_csv(f"{f1db_utils.folder}/{performanceType2file[performanceType]}")
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
     df.drop(columns=df.columns.difference(["positionNumber","driverId","year"]), inplace=True)
@@ -206,8 +195,8 @@ def count_podiums(row):
 def getTrendPerformance(selected_drivers, performanceType):
     # print("======================================")
     # print(f"{selected_drivers} - {performanceType}")
-    df = pd.read_csv(f"{folder}/{performanceType2file[performanceType]}")
-    df_drivers_info = pd.read_csv(f"{folder}/{drivers_info}")
+    df = pd.read_csv(f"{f1db_utils.folder}/{performanceType2file[performanceType]}")
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
     
@@ -230,7 +219,7 @@ def getTrendPerformance(selected_drivers, performanceType):
         
         case "wins" | "podiums" | "poles":
             df.drop(columns=df.columns.difference(["raceId","driverId","positionNumber"]), inplace=True)
-            df_races = pd.read_csv(f"{folder}/{races}")
+            df_races = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.races}")
             df_races.rename(columns={"id":"raceId"}, inplace=True)
             df_races.drop(columns=df_races.columns.difference(["raceId","date","grandPrixId","officialName","circuitId"]), inplace=True)
             df = pd.merge(df, df_races, on="raceId", how="left")

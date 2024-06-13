@@ -79,7 +79,7 @@ def createRangeSlider():
 
 def createDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
-    print(slider_value)
+    # print(slider_value)
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
@@ -93,7 +93,7 @@ def createDropDownDrivers(slider_value):
 
 def updateDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
-    print(slider_value)
+    # print(slider_value)
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
