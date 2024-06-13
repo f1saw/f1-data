@@ -49,10 +49,7 @@ def getGeoDataGp():
     df1 = df_list[1].loc[:, ['year', 'grandPrixId']]
     df2 = df_list[2].loc[:, ['id', 'countryId']]
     df3 = df_list[3].loc[:, ['id', 'alpha3Code']]
-    #print(pd.concat([df1, df2, df3], axis=1))
     return [df1, df2, df3]#pd.concat([df1, df2, df3], axis=1)
-    #da races mi prendo granprixid, tramite granprixid mi trovo il countryId, in coutris uso questo id per trovare alpha 3code
-
 
 
 def createRadioButtonDriver():
@@ -66,7 +63,8 @@ def createRadioButtonDriver():
                       value="positionNumber",
                       # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
-                      id="radio-input"
+                      id="radio-input",
+                      style={'marginBottom': 20, 'marginLeft': 7}
                 )
 
 def createRangeSlider():
@@ -83,24 +81,30 @@ def createDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
     print(slider_value)
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
-    print(data_in_range)
     data_in_range = data_in_range['driverId'].unique()
-    print(data_in_range)
     
     return dcc.Dropdown(
     id='dropdown_drivers',
     options = [{'label': value, 'value': value} for value in data_in_range ],
     value=[data_in_range[0]],
     multi=True,
-    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
-)
+    style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
+    )
+
+def updateDropDownDrivers(slider_value):
+    data = getSeasonDrivingStanding()
+    print(slider_value)
+    data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
+    data_in_range = data_in_range['driverId'].unique()
+    
+    return [{'label': value, 'value': value} for value in data_in_range]
 
 def crateDriverElement(slider_value):
     if (slider_value is None):
         slider_value = [1990, 1995]
     return html.Div([
-                    createRangeSlider(),
                     createRadioButtonDriver(),
+                    createRangeSlider(),
                     createDropDownDrivers(slider_value)
                 ])
 
@@ -126,8 +130,10 @@ def createSeasonDriverPlot(radio_button_value, slider_value, driver):
     data_in_range = data_in_range[selected_drivers_mask]
     
     fig = px.line(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId", height=400)
+    fig.update_xaxes(dtick=1, tickmode='linear')
     #fig = px.scatter(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId")
-    fig.update_yaxes(autorange="reversed")
+    if (radio_button_value == "positionNumber"):
+        fig.update_yaxes(autorange="reversed")
 
     return fig
 

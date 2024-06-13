@@ -68,16 +68,10 @@ def render_content(tab):
         # SEASONS
         case 'tab-0-seasons':
             return html.Div([
-                html.H3('Tab content 1'),
+                #html.H3('Tab content 1'),
                 season.createDropDown(),
                 html.Hr(),
                 html.Div(
-                    [#season.createRangeSlider(),
-                     html.Div(
-                        season.createRadioButtonDriver(),
-                        id="radio_button_div"
-                     )
-                    ],
                     #season.crateDriverElement([1950, 1955]),
                     id="range_div"
                 ),
@@ -108,6 +102,8 @@ def render_content(tab):
         case _:
              return html.Div([])
         
+#Callback season
+        
 @callback(Output('range_div', 'children'),
               Input('dropdown', 'value'))
 def update_graph(dropdown):
@@ -115,14 +111,11 @@ def update_graph(dropdown):
         return season.crateDriverElement([1990, 1995])
     return
          
-@callback(Output('radio_button_div', 'children'),
-              #[Input('dropdown', 'value'),
+@callback(Output('dropdown_drivers', 'options'),
                Input('range-slider', 'value'))
-def update_graph(slider_value):
-    #if (dropdown == "Season Driver"):
-        return season.createDropDownDrivers(slider_value)#season.crateDriverElement(slider_value)
-    #return
-    
+def update_dropdown(slider_value):
+        return season.updateDropDownDrivers(slider_value)
+
 
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
@@ -135,7 +128,9 @@ def update_graph(radio_value, dropdown_value, range_value, driver):
     elif (dropdown_value == "Season Driver"):
         return season.createSeasonDriverPlot(radio_value, range_value, driver)  
     else:
-        return season.createSeasonGeo()   
+        return season.createSeasonGeo() 
+
+####   
 
         
 if __name__ == '__main__':
