@@ -1,13 +1,8 @@
-import sys
-import os
 import pandas as pd
 import plotly.express as px
-import dash
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
-
-sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
-from drivers import *
+import backend.drivers as drivers
 
 
 # chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
@@ -23,73 +18,46 @@ from drivers import *
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
 
-radio_drivers_performance = dbc.RadioItems(
-    id="radio-drivers-performance-id",
-    options=[
-        {"label": "Absolute", "value": "absolute"},
-        {"label": "Driver's Trend", "value": "trend"}
-    ],
-    value="absolute",
-    inline=True
-)
 
-drivers_performance_type_radio = dbc.RadioItems(
-    id="radio-drivers-performance-type-id",
-    options=[
-        {"label": "WDCs", "value": "wdcs"},
-        {"label": "Wins", "value": "wins"},
-        {"label": "Podiums", "value": "podiums"},
-        {"label": "Poles", "value": "poles"}
-    ],
-    value="wdcs",
-    inline=True
-)
-
-drivers_performance_min_value = dcc.Slider(
-    id='drivers-performance-min-value-id',
-    min=0,
-    max=100,  # Un valore molto grande per simulare l'infinito
-    step=1,
-    value=0,
-    marks={0: '0', 100: '∞'},
-    tooltip={"placement": "bottom", "always_visible": True}
-) 
-
-drivers_performance_dropdown = dcc.Dropdown(
-    id="drivers-performance-dropdown",
-    options=[{"label":row["driverName"], "value": row["driverId"]} for row in Drivers.getDrivers().to_dict(orient="records")],
-    placeholder="Select a Driver",
-    searchable=True,
-    clearable=False,
-    multi=True,
-    maxHeight=200
-)
 
 
 # TODO => do useful structure like tabs = ["seasons": [array_of_graphs], "circuits": [array_of_graphs], ...]
 # TODO => fare labels con dizionario e for figo
 # ["plotly", "plotly_white", "plotly_dark", "ggplot2", "seaborn", "simple_white", "none"]
-drivers_template = "plotly_dark"
+drivers_template = "plotly_dark" # TODO => put them in utils.py
 transparent_bg = {
     "plot_bgcolor": "rgba(0,0,0,0)",
     "paper_bgcolor": "rgba(0,0,0,0)"
 }
-drivers_dfs = {
-    "numDriversPerYear": Drivers.getNumDriversPerYear(),
-    "worldSpread": Drivers.getWorldSpread(),
-    "absolutePerformance": Drivers.getAbsolutePerformance(Drivers.PERFORMANCE_TYPE_DEFAULT, Drivers.MIN_VALUE_DEFAULT, Drivers.COL_TO_APPLY_MIN_DEFAULT)
+warning_empty_dataframe = {
+    "layout": {
+        "xaxis": {"visible": False},
+        "yaxis": {"visible": False},
+        "annotations": [{
+            "text": "No matching data found",
+            "xref": "paper",
+            "yref": "paper",
+            "showarrow": False,
+            "font": {"size": 28}
+        }]
+    }
 }
 
-driver_type = {
-    "officialDriver": "Official Driver",
-    "testDriver": "Test Driver"
-}
+def getTitleObj(titleStr):
+    return {
+        "text": titleStr,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top',
+        'font': {'size': 18 }
+    }
+
 
 
 # STATIC FIGURES
 drivers_figures = {
     "numDriversPerYear" : px.line(
-        drivers_dfs["numDriversPerYear"],
+        drivers.drivers_dfs["numDriversPerYear"],
         x = "year",
         y = ["officialDriver","testDriver"],
         markers = True,
@@ -103,20 +71,14 @@ drivers_figures = {
             "year": False
         },
         template = drivers_template
-    ).for_each_trace(lambda t: t.update(name = driver_type[t.name]))
+    ).for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name]))
     .update_layout(
         transparent_bg,
-        title = {
-            "text": "Number of Official Drivers and Test Drivers Over the Years",
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'font': {'size': 18 }
-        },
+        title = getTitleObj("Number of Official Drivers and Test Drivers Over the Years"),
         hovermode = "x"
     ),
     "worldSpread": px.scatter_geo(
-        drivers_dfs["worldSpread"], 
+        drivers.drivers_dfs["worldSpread"], 
         locations = "alpha3Code", 
         color = "continentName",
         hover_name = "countryName", 
@@ -230,48 +192,31 @@ def render_content(tab):
             return html.Div([
                 # html.H3('Tab content 2'),
                 dbc.Row([
-                    dbc.Col(
-                        dcc.Graph(id='drivers-line', figure=drivers_figures['numDriversPerYear']),
-                        width=6
-                    ),
-                    dbc.Col(
-                        dcc.Graph(id="drivers-world", figure=drivers_figures['worldSpread']),
-                        width=6
-                    )
+                    dbc.Col(dcc.Graph(id='drivers-line', figure=drivers_figures['numDriversPerYear']), width=6),
+                    dbc.Col(dcc.Graph(id="drivers-world", figure=drivers_figures['worldSpread']), width=6)
                 ]),
                 dbc.Stack([
                     dbc.Row([
                         dbc.Col([
                             dbc.Stack([
-                                html.Label("Type of Graph:"),
-                                radio_drivers_performance
+                                html.Label("Type of Graph"),
+                                drivers.drivers_performance_type_graph_radio
                             ], direction="horizontal", gap=3),
                             dbc.Stack([
                                 html.Label("Performance Type"),
-                                drivers_performance_type_radio
+                                drivers.drivers_performance_type_radio
                             ], direction="horizontal", gap=3),
                         ], width=4),
                         dbc.Col([
                             dbc.Row([
-                                dbc.Col(
-                                    html.Label("Min Value"),
-                                    width=2
-                                ),
-                                dbc.Col(
-                                    drivers_performance_min_value,
-                                    width=7
-                                ) 
+                                dbc.Col(html.Label("Min Value"), width=2),
+                                dbc.Col(drivers.drivers_performance_min_value, width=7) 
                             ]),
-                            dbc.Col(
-                                drivers_performance_dropdown,
-                                width=9
-                            )
+                            dbc.Col(drivers.drivers_performance_dropdown, width=9)
                         ], width=4)
                     ]),
                     dcc.Graph(id="drivers-performance")
                 ])
-                
-                
             ])
         
         # DEFAULTS
@@ -279,43 +224,31 @@ def render_content(tab):
              return html.Div([])
          
 
-drivers_dict = {
-    "driverId": "Driver",
-    "driverName": "Driver",
-    "count_position_1": "Wins",
-    "count_position_2": "2°",
-    "count_position_3": "3°",
-    "count_podiums": "Podiums",
-    "variable": "Position",
-    "value": "Number of Podiums",
-    "wdcs": "WDCs",
-    "wins": "Wins",
-    "poles": "Poles",
-    "podiums": "Podiums"
-}
 
 @app.callback(
-    Output("drivers-performance", "figure"),
-    [Input("radio-drivers-performance-id", "value"),
+    [Output("drivers-performance", "figure"),
+     Output("drivers-performance-min-value-id", "max"),
+     Output("drivers-performance-min-value-id", "marks")],
+    [Input("drivers-performance-type-graph-id", "value"),
      Input("radio-drivers-performance-type-id", "value"),
      Input("drivers-performance-min-value-id", "value"),
      Input("drivers-performance-dropdown", "value")]
 )
 def update_drivers_performance(graph_type, performance_type, min_value, selected_driver):
-    print(f"{graph_type} {performance_type}")
+    # print(f"{graph_type} {performance_type}")
     df = []
     
     if (graph_type == "absolute"):
-        if (performance_type == Drivers.PERFORMANCE_TYPE_DEFAULT and min_value == Drivers.MIN_VALUE_DEFAULT):
-            df = drivers_dfs["absolutePerformance"] # standard values, use the one already computed
+        if (performance_type == drivers.PERFORMANCE_TYPE_DEFAULT and min_value == drivers.MIN_VALUE_DEFAULT):
+            df = drivers.drivers_dfs["absolutePerformance"] # standard values, use the one already computed
         else:
-            df = Drivers.getAbsolutePerformance(
+            df = drivers.getAbsolutePerformance(
                 performance_type, 
                 min_value, 
                 "count_podiums" if performance_type == "podiums" else "count_position_1"
             )
             
-        title = f"Most F1 {drivers_dict[performance_type]}"
+        title = f"Most F1 {drivers.drivers_dict[performance_type]}"
         match performance_type:
             case "wdcs" | "wins" | "poles":
                 # Keep only 1st place results, already done with poles
@@ -323,12 +256,12 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                     df = df[df["count_position_1"] != 0] 
                 df.sort_values(by=["count_position_1"], ascending=False, inplace=True)         
                 y = "count_position_1"
-                drivers_dict["count_position_1"] = f"Number of {drivers_dict[performance_type]}"
+                drivers.drivers_dict["count_position_1"] = f"Number of {drivers.drivers_dict[performance_type]}"
                 
             case "podiums":
                 df.sort_values(by=["count_podiums"], ascending=False, inplace=True)
                 y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
-                drivers_dict["count_position_1"] = "1°"
+                drivers.drivers_dict["count_position_1"] = "1°"
         
         
         x = "driverName"
@@ -337,61 +270,88 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             "count_position_2": "silver",
             "count_position_3": "peru"
         }
-        fig = px.bar(df, 
-            x = x, 
-            y = y,
-            labels = drivers_dict,
-            hover_data = {
-                # y: drivers_dict[y]
-                x: False
-            },
-            template = drivers_template,
-            color_discrete_sequence =[colors["count_position_1"]]*len(df),
-            color_discrete_map=colors,
-            category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
+        if min_value <= df[y].max():
+            fig = px.bar(df, 
+                x = x, 
+                y = y,
+                labels = drivers.drivers_dict,
+                hover_data = {
+                    # y: drivers_dict[y]
+                    x: False
+                },
+                template = drivers_template,
+                color_discrete_sequence =[colors["count_position_1"]]*len(df),
+                color_discrete_map=colors,
+                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
+            ).update_layout(
+                transparent_bg,
+                title = {
+                    "text": title,
+                    'x':0.5,
+                    'xanchor': 'center',
+                    'yanchor': 'top',
+                    'font': {'size': 18 }
+                },
+                hovermode="x",
+                showlegend=True
+            ).for_each_trace(
+                lambda t: t.update(name = drivers.drivers_dict[t.name]) if t.name in drivers.drivers_dict else None
+            )
+        
+            if performance_type == "podiums":
+                return [fig.update_traces(
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=16,
+                    ),
+                    # customdata = ["1°", "2°", "3°"],
+                    hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
+                            "<extra></extra>"
+                ), df[y].max(), {0: "0", 100: "100"}]
+            else:
+                return [fig.update_traces(
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=16,
+                    ),
+                    # customdata = ["1°", "2°", "3°"],
+                    hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
+                            "<extra></extra>",
+                    showlegend=True,
+                    name= "1°"
+                ), df[y].max(), {0: "0", 100: "100"}]
+        else:
+            return [warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
+
+
+    elif selected_driver is not None: # Performance Trend
+        df = drivers.getTrendPerformance(selected_driver, performance_type)
+        drivers.drivers_dict["progressiveCounter"] = f"{drivers.drivers_dict[performance_type]} Trend"
+        
+        hover_data = {
+            drivers.performanceType2TimeAxis[performance_type]: False
+        }
+        if performance_type != "wdcs":
+            hover_data["officialName"] = True
+        
+        return [px.line(
+            df,
+            x = drivers.performanceType2TimeAxis[performance_type], 
+            y = "progressiveCounter", 
+            color = "driverName",
+            markers = True,
+            labels = drivers.drivers_dict,
+            hover_data = hover_data,
+            template = drivers_template
         ).update_layout(
             transparent_bg,
-            title = {
-                "text": title,
-                'x':0.5,
-                'xanchor': 'center',
-                'yanchor': 'top',
-                'font': {'size': 18 }
-            },
-            hovermode="x",
-            showlegend=True
-        ).for_each_trace(
-            lambda t: t.update(name = drivers_dict[t.name]) if t.name in drivers_dict else None
-        )
-        
-        if performance_type == "podiums":
-            return fig.update_traces(
-                hoverlabel=dict(
-                    bgcolor="white",
-                    font_size=16,
-                ),
-                # customdata = ["1°", "2°", "3°"],
-                hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
-                        "<extra></extra>"
-            )
-        else:
-            return fig.update_traces(
-                hoverlabel=dict(
-                    bgcolor="white",
-                    font_size=16,
-                ),
-                # customdata = ["1°", "2°", "3°"],
-                hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
-                        "<extra></extra>",
-                showlegend=True,
-                name= "1°"
-            )
+            yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
+            title = getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
+            hovermode = "x"
+        ) if not df.empty else warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
 
-    elif selected_driver is not None:
-        # TODO
-        df = Drivers.getTrendPerformance(selected_driver, performance_type)
-        
-
+    else:
+        return [warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
     
          
 if __name__ == '__main__':

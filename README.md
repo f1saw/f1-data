@@ -3,14 +3,16 @@ https://github.com/f1db/f1db
 
 
 ### TODO | MATTE
-- [ ] completare drivers (dropdown x trend)
 - [ ] sistemo codice x bene
 
 - [ ] add drivers' flag on the top of the bar chart
 - [ ] absolute => show only min value ; trend => show only select driver
 - [ ] bug with empty dataset
+- [ ] show total podiums count in absolute graph
 
 - [ ] CIRCUITS
+
+- [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
 
 
 ==================================================================================
