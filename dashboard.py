@@ -176,15 +176,22 @@ def render_content(tab):
         case 'tab-0-seasons':
             return html.Div([
                 #html.H3('Tab content 1'),
-                season.createDropDown(),
                 html.Hr(),
+                dbc.Row([
+                    dbc.Col(
+                        dcc.Graph(id="season_graph", figure=season.createSeason_GP_Plot())
+                    ),
+                    dbc.Col(
+                        dcc.Graph(id="season_graph", figure=season.createSeasonGeo())
+                    )
+                ]),
                 html.Div(
-                    #season.crateDriverElement([1950, 1955]),
+                    season.crateDriverElement([1950, 1955]),
                     id="range_div"
                 ),
                 dbc.Row(
                     dbc.Col(
-                        dcc.Graph(id="season_graph", figure=season.createSeasonGeo())
+                        dcc.Graph(id="season_graph", figure=season.createSeasonDriverPlot())
                     )
                 )
             ], className="d-flex flex-column justify-content-between gap-2")
@@ -242,32 +249,22 @@ def render_content(tab):
              return html.Div([])
         
 #Callback season
-        
-@callback(Output('range_div', 'children'),
-              Input('dropdown', 'value'))
-def update_graph(dropdown):
-    if (dropdown == "Season Driver"):
-        return season.crateDriverElement([1990, 1995])
-    return
          
 @callback(Output('dropdown_drivers', 'options'),
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
+        print(slider_value)
         return season.updateDropDownDrivers(slider_value)
-
 
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
-               Input('dropdown', 'value'),
                Input('range-slider', 'value'),
                Input('dropdown_drivers', 'value')])
-def update_graph(radio_value, dropdown_value, range_value, driver):
-    if (dropdown_value == "Season Gran Prix"):
-        return season.createSeason_GP_Plot()
-    elif (dropdown_value == "Season Driver"):
-        return season.createSeasonDriverPlot(radio_value, range_value, driver)  
-    else:
-        return season.createSeasonGeo() 
+def update_graph(radio_value, range_value, driver):
+    if (driver!=[]):
+        return season.createSeasonDriverPlot(radio_value, range_value, driver) 
+    return season.createSeasonDriverPlot(radio_value, range_value)   
+ 
 
 ####   
 
