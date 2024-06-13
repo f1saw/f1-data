@@ -280,7 +280,7 @@ drivers_performance_dropdown = dcc.Dropdown(
     clearable=False,
     multi=True,
     maxHeight=200,
-    # value=["lewis-hamilton","max-verstappen"]
+    value=["lewis-hamilton","max-verstappen","sebastian-vettel"]
 )
 
 drivers_dfs = {

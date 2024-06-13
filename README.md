@@ -3,8 +3,12 @@ https://github.com/f1db/f1db
 
 
 ### TODO | MATTE
-- [ ] sistemo codice x bene
+- [ ] CIRCUITS | RACE_QUALI => visualizzo su HOVER elenco year, driver-name (come costruttori-mondo)
 
+
+
+
+- [ ] sistemo codice x bene
 - [ ] add drivers' flag on the top of the bar chart
 - [ ] absolute => show only min value ; trend => show only select driver
 - [ ] bug with empty dataset
@@ -12,11 +16,12 @@ https://github.com/f1db/f1db
 - [ ] how to put callbacks in different file
 - [ ] CIRCUITS:
   #gp_held | ... ??qualifying_gap_comparison_between_1st_2nd?? ?? in a circuit, how many times who started on pole / 1st row ended up 1st
-  qualifying_laps
+  qualifying_pole_lap_time (?? aggiungere lap time medio in gara ? (tempo_gara/#giri) ??)
   
 ?? differenziazione ROAD|STREET|RACE circuiti negli anni ?? (come official e test drivers)
-
+- [ ] DRIVERS | mondo =>  elencare nome piloti come teams (da mettere anche in seasons)
 - [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
+- [ ] commentare cosa prendono, fanno e restituiscono le funzioni
 
 
 ==================================================================================
