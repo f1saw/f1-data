@@ -1,6 +1,22 @@
 # f1-data
 https://github.com/f1db/f1db
 
+
+### TODO | MATTE
+- [ ] sistemo codice x bene
+
+- [ ] add drivers' flag on the top of the bar chart
+- [ ] absolute => show only min value ; trend => show only select driver
+- [ ] bug with empty dataset
+- [ ] show total podiums count in absolute graph
+
+- [ ] CIRCUITS
+
+- [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
+
+
+==================================================================================
+
 -> avendo principalmente variabili numeriche (e non tante categoriali)
   => suggerimento di implementare un grafico per implementare la correlazione (dashboard di esempio es.12-penguins) 
     | es. chi ha il maggior # vittorie in una stagione diventa campione del mondo ?
