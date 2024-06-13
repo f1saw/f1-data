@@ -238,6 +238,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
     # print(f"{graph_type} {performance_type}")
     df = []
     
+    max_val = 0
     if (graph_type == "absolute"):
         if (performance_type == drivers.PERFORMANCE_TYPE_DEFAULT and min_value == drivers.MIN_VALUE_DEFAULT):
             df = drivers.drivers_dfs["absolutePerformance"] # standard values, use the one already computed
@@ -257,11 +258,13 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 df.sort_values(by=["count_position_1"], ascending=False, inplace=True)         
                 y = "count_position_1"
                 drivers.drivers_dict["count_position_1"] = f"Number of {drivers.drivers_dict[performance_type]}"
+                max_val = df[y].max()
                 
             case "podiums":
                 df.sort_values(by=["count_podiums"], ascending=False, inplace=True)
                 y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
                 drivers.drivers_dict["count_position_1"] = "1°"
+                max_val = df["count_podiums"].max()
         
         
         x = "driverName"
@@ -270,7 +273,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             "count_position_2": "silver",
             "count_position_3": "peru"
         }
-        if min_value <= df[y].max():
+        # print(f"{min_value} {max_val}")
+        if min_value <= max_val:
             fig = px.bar(df, 
                 x = x, 
                 y = y,
@@ -307,7 +311,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                     # customdata = ["1°", "2°", "3°"],
                     hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
                             "<extra></extra>"
-                ), df[y].max(), {0: "0", 100: "100"}]
+                ), max_val, {0: "0", str(max_val): str(max_val)}]
             else:
                 return [fig.update_traces(
                     hoverlabel=dict(
@@ -319,9 +323,9 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                             "<extra></extra>",
                     showlegend=True,
                     name= "1°"
-                ), df[y].max(), {0: "0", 100: "100"}]
+                ), max_val, {0: "0", str(max_val): str(max_val)}]
         else:
-            return [warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
+            return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
 
 
     elif selected_driver is not None: # Performance Trend
@@ -348,10 +352,10 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
             title = getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
             hovermode = "x"
-        ) if not df.empty else warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
+        ) if not df.empty else warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
 
     else:
-        return [warning_empty_dataframe, df[y].max(), {0: "0", 100: "100"}]
+        return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
     
          
 if __name__ == '__main__':
