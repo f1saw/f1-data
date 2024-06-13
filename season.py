@@ -5,6 +5,7 @@ from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 
 import os
+from datetime import datetime
 
 # selezione anni -> prendo piloti in quegli anni e si vede come variano nel tempo i piazzamenti finali
 # numero di gp fatti
@@ -68,19 +69,41 @@ def createRadioButtonDriver():
                       id="radio-input"
                 )
 
-def createRadioButtonGP():
-    return dbc.RadioItems(
-                      # Sono le 3 opzioni
-                      options=[
-                          {"label":"ToDo", "value":"positionNumber"}, # opzione boxplot
-                          {"label":"ToDo", "value":"points"}
-                      ],
-                      # Impostiamo il valore di default
-                      value="positionNumber",
-                      # inline = True mette i 3 bottoni in linea invece che verticale
-                      inline=True,
-                      id="radio-input"
-                )
+def createRangeSlider():
+    marks = {str(year): str(year) for year in range(1950, datetime.now().year + 1)}
+    return dcc.RangeSlider(1950, 
+                           datetime.now().year, 
+                           1, 
+                           value=[1990, 1995], 
+                           marks=marks, 
+                           id='range-slider'
+                    )
+
+def createDropDownDrivers(slider_value):
+    data = getSeasonDrivingStanding()
+    print(slider_value)
+    data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
+    print(data_in_range)
+    data_in_range = data_in_range['driverId'].unique()
+    print(data_in_range)
+    
+    return dcc.Dropdown(
+    id='dropdown_drivers',
+    options = [{'label': value, 'value': value} for value in data_in_range ],
+    value=[data_in_range[0]],
+    multi=True,
+    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
+)
+
+def crateDriverElement(slider_value):
+    if (slider_value is None):
+        slider_value = [1990, 1995]
+    return html.Div([
+                    createRangeSlider(),
+                    createRadioButtonDriver(),
+                    createDropDownDrivers(slider_value)
+                ])
+
 
 def createDropDown():
     return dcc.Dropdown(
@@ -94,12 +117,13 @@ def createDropDown():
     style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
 )
 
-def createSeasonDriverPlot(radio_button_value):
+def createSeasonDriverPlot(radio_button_value, slider_value, driver):
     data = getSeasonDrivingStanding()
     #TODO: far scegliere l'anno
-    data_in_range = data.loc[(data["year"] >= 2000) & (data["year"] <= 2005)]
-    #print(data_in_range)
-
+    data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
+    
+    selected_drivers_mask = data_in_range["driverId"].isin(driver)
+    data_in_range = data_in_range[selected_drivers_mask]
     
     fig = px.line(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId", height=400)
     #fig = px.scatter(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId")
@@ -130,7 +154,6 @@ def createSeasonGeo():
 
     df_count.columns = ['grandPrixId', 'value']
     df = pd.DataFrame(columns=['id', 'count', 'code'])
-    print(df_count)
     for index, value in df_count['grandPrixId'].items():
         
         countrieId = df2.loc[df2['id'] == value, "countryId"].iloc[0]
@@ -142,12 +165,6 @@ def createSeasonGeo():
         
     
     df['count'] = df['count'].astype(str).astype(int)
-    fig = px.scatter_geo(df, locations=df["code"], size="count", hover_data={"id" : True})
+    fig = px.scatter_geo(df, locations=df["code"], size="count", hover_data={"id" : True}, height=400)
+    
     return fig
-
-
-
-
-
-
-
