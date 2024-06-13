@@ -40,8 +40,9 @@ def createRadioButton():
                       # Sono le 3 opzioni
                       options=[
                           {"label":"Total Win", "value":"win"}, # opzione boxplot
-                          {"label":"Best Race Result", "value":"best race"},
-                          {"label":"Num Win Race", "value":"win race"}
+                          #{"label":"Best Race Result", "value":"best race"},
+                          {"label":"Num Win Race", "value":"win race"},
+                          {"label":"Num Podiums", "value":"podiums"}
                       ],
                       # Impostiamo il valore di default
                       value="win",
@@ -50,6 +51,34 @@ def createRadioButton():
                       id="radio-input-teams",
                       style={'marginBottom': 20, 'marginLeft': 7}
                 )
+
+def createRadioButtonGraph():
+    return dbc.RadioItems(
+                      # Sono le 3 opzioni
+                      options=[
+                          {"label":"Absolute", "value":"absolute"}, # opzione boxplot
+                          #{"label":"Best Race Result", "value":"best race"},
+                          {"label":"Constructor's Trend", "value":"trend"}
+                      ],
+                      # Impostiamo il valore di default
+                      value="absolute",
+                      # inline = True mette i 3 bottoni in linea invece che verticale
+                      inline=True,
+                      id="radio-input-graph",
+                      style={'marginBottom': 20, 'marginLeft': 7}
+                )
+
+def createDropdown():
+    return dcc.Dropdown(
+    id='dropdown',
+    options=[
+        {'label': 'Season Map', 'value': 'Season Map'},
+        {'label': 'Season Driver', 'value': 'Season Driver'},
+        {'label': 'Season Gran Prix', 'value': 'Season Gran Prix'}
+    ],
+    value='Season Map',
+    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
+    )
 
 def createSlider():
     return dcc.Slider(
@@ -100,6 +129,21 @@ def createRaceWinPlot(min_value = 0):
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
     utility.figDesign(fig, "Total Race Win")
     return fig
+
+def createTotalPodiumPlot(min_value = 1):
+    df = getTeamsData()
+    df.sort_values(by='totalPodiums', ascending=False, inplace=True)
+    if (min_value is None):
+        min_value = 1
+    print(min_value)
+    df = df.loc[df['totalPodiums'] >= min_value]
+    fig = px.bar(df, x='fullName', y='totalPodiums',
+                color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
+                color_discrete_map=utility.colors,
+                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
+    utility.figDesign(fig, "Total podiums for costructor")
+    return fig
+    
 
 def creteNumTeamsEntrantsForYear():
     df = getEntrantsTeamsData()

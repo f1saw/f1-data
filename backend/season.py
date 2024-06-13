@@ -115,18 +115,6 @@ def crateDriverElement(slider_value):
                 ])
 
 
-def createDropDown():
-    return dcc.Dropdown(
-    id='dropdown',
-    options=[
-        {'label': 'Season Map', 'value': 'Season Map'},
-        {'label': 'Season Driver', 'value': 'Season Driver'},
-        {'label': 'Season Gran Prix', 'value': 'Season Gran Prix'}
-    ],
-    value='Season Map',
-    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
-)
-
 def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1990, 1995], driver=['ayrton-senna', 'alain-prost']):
     data = getSeasonDrivingStanding()
    

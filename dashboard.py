@@ -132,9 +132,7 @@ drivers_figures = {
         projection_type='orthographic',
         showcoastlines=True,
         resolution=110
-    ),
-
-    
+    ), 
 }
 # my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
 
@@ -261,14 +259,28 @@ def render_content(tab):
                 html.Hr(),
                 dbc.Row([
                     dbc.Col(
-                        teams.createRadioButton(),
-                        width=3
+                    dbc.Stack([
+                                html.Label("Performance Type"),
+                                teams.createRadioButtonGraph()
+                            ], direction="horizontal", gap=3),
+                    width=3),
+                    dbc.Col(
+                        teams.createDropdown(),
+                        width=6
                     ),
+                ]),
+                dbc.Row([
+                    dbc.Col(
+                        dbc.Stack([
+                                html.Label("Performance Type"),
+                                teams.createRadioButton(),
+                        ], direction="horizontal", gap=3),
+                        width=3),
                     dbc.Col(
                         teams.createSlider()
                          #style={'marginRight': 30}
                     )
-                ],style={'marginRight': 38, 'marginLeft': 42}, className='row justify-content-center'),
+                ],style={'marginRight': 38, 'marginLeft': 42}),
                 dbc.Row(
                     dbc.Col(
                         dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
@@ -306,25 +318,29 @@ def update_graph(radio_value, range_value, driver):
 def update_teams_graph(radio_value, slider_value):
     if (radio_value == 'win'):
         return teams.createWinConstructorPlot(slider_value)
-    elif(radio_value == "best race"):
-        return teams.createRaceConstructPlot(slider_value)
-    else:
+    #elif(radio_value == "best race"):
+     #   return teams.createRaceConstructPlot(slider_value)
+    elif(radio_value == "win race"):
         return teams.createRaceWinPlot(slider_value)
+    else:
+        return teams.createTotalPodiumPlot(slider_value)
 
 
 # TODO -> prendere dinamicamente i valori 16, 32 etc
 @app.callback(
     [Output('teams-slider', 'max'),
      Output('teams-slider', 'min'),
-    Output('teams-slider', 'marks')],
+     Output('teams-slider', 'marks')],
         Input('radio-input-teams', 'value'))
 def update_teams_slider(radio_input):
     if (radio_input == "win"):
         return 16, 1, {i: str(i) for i in range(1, 16+1)}
-    elif(radio_input == "best race"):
-        return 32, 1, {i: str(i) for i in range(1, 32+1)}
-    else:
+    #elif(radio_input == "best race"):
+     #   return 32, 1, {i: str(i) for i in range(1, 32+1)}
+    elif(radio_input == "win race"):
         return 20, 1, {i: str(i) for i in range(1, 20+1)}
+    else:
+        return 37, 1, {i: str(i) for i in range(1, 37+1)}
 
 
 
