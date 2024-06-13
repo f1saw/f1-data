@@ -2,11 +2,26 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
+
+import season
 import backend.drivers as drivers
+
 
 
 # chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
 # leggere da ./f1db-csv/
+
+# SEASON DATA
+"""
+df_season_list = season.getSeasonData()
+
+df_season_list["df_season_costurct"] = df_season_list[0]
+df_season_list["df_season_driver"] = df_season_list[1]
+df_season_list["df_season_entrants_constructors"] = df_season_list[2]
+df_season_list["df_season_entrants_drivers"] = df_season_list[3]
+df_season_list["df_season_entrants_tyre"] = df_season_list[4]
+df_season_list["sdf_season_entrants"] = df_season_list[5]
+"""
 
 #### DATI OTTENUTI
 
@@ -14,6 +29,7 @@ import backend.drivers as drivers
 #### CREAZIONE DASHBOARD
 
 # external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
@@ -120,7 +136,6 @@ drivers_figures = {
 
 
 
-
 # TABS STRUCTURE
 tabs = ["seasons", "circuits", "drivers", "teams"]
 tabs_children = []
@@ -134,6 +149,7 @@ for idx, tab in enumerate(tabs):
 
 
 # LAYOUT BUILDER
+
 app.layout = html.Div([
     html.H1('F1-DATA', className="text-center fw-bold m-3"),
     html.Div([
@@ -159,15 +175,17 @@ def render_content(tab):
         # SEASONS
         case 'tab-0-seasons':
             return html.Div([
-                html.H3('Tab content 1'),
-                dcc.Graph(
-                    figure={
-                        'data': [{
-                            'x': [1, 2, 3],
-                            'y': [3, 1, 2],
-                            'type': 'bar'
-                        }]
-                    }
+                #html.H3('Tab content 1'),
+                season.createDropDown(),
+                html.Hr(),
+                html.Div(
+                    #season.crateDriverElement([1950, 1955]),
+                    id="range_div"
+                ),
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(id="season_graph", figure=season.createSeasonGeo())
+                    )
                 )
             ], className="d-flex flex-column justify-content-between gap-2")
             
@@ -222,7 +240,36 @@ def render_content(tab):
         # DEFAULTS
         case _:
              return html.Div([])
+        
+#Callback season
+        
+@callback(Output('range_div', 'children'),
+              Input('dropdown', 'value'))
+def update_graph(dropdown):
+    if (dropdown == "Season Driver"):
+        return season.crateDriverElement([1990, 1995])
+    return
          
+@callback(Output('dropdown_drivers', 'options'),
+               Input('range-slider', 'value'))
+def update_dropdown(slider_value):
+        return season.updateDropDownDrivers(slider_value)
+
+
+@callback(Output('season_graph', 'figure'),
+              [Input('radio-input', 'value'),
+               Input('dropdown', 'value'),
+               Input('range-slider', 'value'),
+               Input('dropdown_drivers', 'value')])
+def update_graph(radio_value, dropdown_value, range_value, driver):
+    if (dropdown_value == "Season Gran Prix"):
+        return season.createSeason_GP_Plot()
+    elif (dropdown_value == "Season Driver"):
+        return season.createSeasonDriverPlot(radio_value, range_value, driver)  
+    else:
+        return season.createSeasonGeo() 
+
+####   
 
 
 @app.callback(
@@ -357,6 +404,6 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
     else:
         return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
     
-         
+      
 if __name__ == '__main__':
     app.run(debug=True) # TODO => what does Debug=True do ??
