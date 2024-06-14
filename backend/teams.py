@@ -154,7 +154,7 @@ def createWinConstructorPlot(min_value = 0):
     fig.update_traces(
         hovertemplate="<br>".join([
             "Team Name: %{x}",
-            "Total Championship Wins: %{y}",
+            "Total Championship Wins: %{y}<extra></extra>",
         ])
     )
     return fig
@@ -176,7 +176,7 @@ def createRaceWinPlot(min_value = 0):
     fig.update_traces(
         hovertemplate="<br>".join([
             "Team Name: %{x}",
-            "Total Race Win: %{y}",
+            "Total Race Win: %{y}<extra></extra>",
         ])
     )
     return fig
@@ -198,7 +198,7 @@ def createTotalPodiumPlot(min_value = 1):
     fig.update_traces(
         hovertemplate="<br>".join([
             "Team Name: %{x}",
-            "Total podiums: %{y}",
+            "Total podiums: %{y}<extra></extra>",
         ])
     )
     return fig
@@ -222,7 +222,7 @@ def creteNumTeamsEntrantsForYear():
     fig.update_traces(
         hovertemplate="<br>".join([
             "Year: %{x}",
-            "Num of Teams: %{y}",
+            "Num of Teams: %{y}<extra></extra>",
         ])
     )
 
@@ -251,7 +251,15 @@ def createCostructorGeo():
     print(df_grouped)
 
     # Creare il plot
-    fig = px.scatter_geo(df_grouped, locations='code', color='Continent', hover_name='Country', hover_data={'Teams': True, 'code': False}, height=400)
+    # TODO => manca la size in funzione della quantità di teams in quella nazione
+    fig = px.scatter_geo(
+        df_grouped, 
+        locations='code', 
+        color='Continent', 
+        hover_name='Country', 
+        hover_data={'Teams': True, 'code': False}, 
+        height=400
+    )
 
     utility.figDesign(fig, "Constructor Position")
 
@@ -277,6 +285,9 @@ def createConstructorTrend(graph_info, teamName):
             df2 = df2[df2['constructorId'].isin(df['id'])]
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            
+            df2 = f1db_utils.order_df(df2, "constructorId", teamName)
+            
             fig = px.line(df2, 
                           x='year', 
                           y='RowNumber', 
@@ -288,7 +299,7 @@ def createConstructorTrend(graph_info, teamName):
             fig.update_traces(
                  hovertemplate="<br>".join([
                     "Date: %{x}",
-                    "Total Championship Win: %{y}",
+                    "Total Championship Win: %{y}<extra></extra>",
                 ])
              )
 
@@ -299,6 +310,7 @@ def createConstructorTrend(graph_info, teamName):
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
+            df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
                           x='date', 
                           y='RowNumber', 
@@ -310,7 +322,7 @@ def createConstructorTrend(graph_info, teamName):
             fig.update_traces(
                  hovertemplate="<br>".join([
                     "Date: %{x}",
-                    "Total Race Win: %{y}",
+                    "Total Race Win: %{y}<extra></extra>",
                 ])
              )
         
@@ -323,6 +335,7 @@ def createConstructorTrend(graph_info, teamName):
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
 
             #print(df2)
+            df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
                           x='date', 
                           y='RowNumber', 
@@ -334,7 +347,7 @@ def createConstructorTrend(graph_info, teamName):
             fig.update_traces(
                  hovertemplate="<br>".join([
                     "Date: %{x}",
-                    "Total Podiums: %{y}",
+                    "Total Podiums: %{y}<extra></extra>",
                 ])
              )
 

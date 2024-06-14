@@ -23,42 +23,17 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callb
 # TODO => do useful structure like tabs = ["seasons": [array_of_graphs], "circuits": [array_of_graphs], ...]
 # TODO => fare labels con dizionario e for figo
 # ["plotly", "plotly_white", "plotly_dark", "ggplot2", "seaborn", "simple_white", "none"]
-drivers_template = "plotly_dark" # TODO => put them in utils.py
-transparent_bg = {
-    "plot_bgcolor": "rgba(0,0,0,0)",
-    "paper_bgcolor": "rgba(0,0,0,0)"
-}
-warning_empty_dataframe = {
-    "layout": {
-        "xaxis": {"visible": False},
-        "yaxis": {"visible": False},
-        "annotations": [{
-            "text": "No matching data found",
-            "xref": "paper",
-            "yref": "paper",
-            "showarrow": False,
-            "font": {"size": 28}
-        }]
-    }
-}
-
-def getTitleObj(titleStr):
-    return {
-        "text": titleStr,
-        'x':0.5,
-        'xanchor': 'center',
-        'yanchor': 'top',
-        'font': {'size': 18 }
-    }
+# f1db_utils.template = "plotly_dark" # TODO => put them in utils.py
 
 
+# TODO => put them in f1db_utils
 # Needed to handle hovertemplate properly
 def format_driver_info(driver_info):
     max_display = 5 # TODO => make it as a const
     if len(driver_info) > max_display:
-        return '<br>'.join([f"{item['driverName']}" for item in driver_info[:max_display]]) + f'<br>and {len(driver_info) - max_display} more'
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info[:max_display]]) + f'<br>and {len(driver_info) - max_display} more<extra></extra>'
     else:
-        return '<br>'.join([f"{item['driverName']}" for item in driver_info])
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info]) + '<extra></extra>'
     
 # drivers.drivers_dfs["worldSpread"].sort_values(by="driverName", inplace=True)
 driver_info = drivers.drivers_dfs["worldSpread"].groupby(['nationalityCountryId','year']).apply(
@@ -70,7 +45,6 @@ drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpr
 
 drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
 # print(drivers.drivers_dfs["worldSpread"][drivers.drivers_dfs["worldSpread"]["alpha3Code"] == "GBR"].tail(10))
-
 
 
 
@@ -91,11 +65,11 @@ drivers_figures = {
             "variable": False,
             "year": False
         },
-        template = drivers_template
+        template = f1db_utils.template
     ).for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name]))
     .update_layout(
-        transparent_bg,
-        title = getTitleObj("Number of Official Drivers and Test Drivers Over the Years"),
+        f1db_utils.transparent_bg,
+        title = f1db_utils.getTitleObj("Number of Official Drivers and Test Drivers Over the Years"),
         hovermode = "x"
     ),
     "worldSpread": px.scatter_geo(
@@ -122,12 +96,19 @@ drivers_figures = {
             "alpha3Code": False,
             "year": False
         },
-        category_orders = {
-            # "continentName": ["Europe"]
+        color_discrete_map = {
+            'Africa': "rgb(99, 110, 250)", 
+            'Antarctica': "rgb(239, 85, 59)", 
+            'Asia': "rgb(0, 204, 150)", 
+            "Europe": "rgb(247,1,0)",
+            'Australia': "rgb(171, 99, 250)", 
+            'North America': "rgb(25, 211, 243)", 
+            'South America': "rgb(254, 203, 82)"
         },
-        template = drivers_template
+        category_orders = f1db_utils.continents_order,
+        template = f1db_utils.template
     ).update_layout(
-        transparent_bg,
+        f1db_utils.transparent_bg,
         height=500,
         title = {
             "text": "Spread of Drivers' Nationalities Over the Years",
@@ -145,9 +126,9 @@ drivers_figures = {
         resolution=50 # Slow but otherwise (110), smaller countries (e.g. Monaco) will not be displayed
     ), 
 }
-drivers_figures["worldSpread"].data[0].customdata = drivers.drivers_dfs["worldSpread"][["countryName", "continentName", "count"]].values.tolist()
+#drivers_figures["worldSpread"].data[0].customdata = drivers.drivers_dfs["worldSpread"][["countryName", "continentName", "count"]].values.tolist()
 
-CUSTOM_HOVERTEMPLATE = '<b>%{customdata[0]}</b>, %{customdata[1]}<br><br><b>%{customdata[2]}</b><br>%{customdata[3]}'
+CUSTOM_HOVERTEMPLATE = '<b>%{customdata[0]}</b>, %{customdata[1]}<br><br><b>%{customdata[2]}</b><br>%{customdata[3]}<extra></extra>'
 drivers_figures["worldSpread"].update_traces(hovertemplate=CUSTOM_HOVERTEMPLATE)
 for frame in drivers_figures["worldSpread"].frames:
     for data in frame.data:
@@ -168,16 +149,16 @@ for idx, tab in enumerate(tabs):
 
 
 # LAYOUT BUILDER
-
+STARTING_PAGE = 0
 app.layout = html.Div([
     html.H1([
-        html.Span('F', style={'color': 'red'}),
-        html.Span('1-DATA', style={'color': 'white'}),
+        html.Span('F1', style={'color': 'red'}), # TODO => il colore titolo sono confuso
+        html.Span('-DATA', style={'color': 'white'}),
         #html.Span('A', style={'color': 'red'}),
     ],className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
-            value=tabs_children[2].value, 
+            value=tabs_children[STARTING_PAGE].value, 
             children=tabs_children, 
             parent_className='custom-tabs', className='pt-5 custom-tabs-container',
             colors={
@@ -198,25 +179,16 @@ def render_content(tab):
         # SEASONS
         case 'tab-0-seasons':
             return html.Div([
-                #html.H3('Tab content 1'),
                 html.Hr(),
                 dbc.Row([
-                    dbc.Col(
-                        dcc.Graph(id="season_GP_graph", figure=season.createSeason_GP_Plot())
-                    ),
-                    dbc.Col(
-                        dcc.Graph(id="season_Geo_graph", figure=season.createSeasonGeo())
-                    )
+                    dbc.Col(dcc.Graph(id="season_GP_graph", figure=season.createSeason_GP_Plot())),
+                    dbc.Col(dcc.Graph(id="season_Geo_graph", figure=season.createSeasonGeo()))
                 ]),
                 html.Div(
-                    season.crateDriverElement([1950, 1955]),
+                    season.crateDriverElement([1950, 1955]), # TODO => rimuovere questi parametri ??
                     id="range_div"
                 ),
-                dbc.Row(
-                    dbc.Col(
-                        dcc.Graph(id="season_graph") #figure=season.createSeasonDriverPlot())
-                    )
-                )
+                dbc.Row(dbc.Col(dcc.Graph(id="season_graph")))
             ], className="d-flex flex-column justify-content-between gap-2")
             
         # CIRCUITS
@@ -443,65 +415,16 @@ def circuits_update_gp_held(min_value):
             "type": True,
             "countryName": True
         },
-        template = drivers_template,
+        template = f1db_utils.template,
         color_discrete_sequence =[f1db_utils.podium_colors["count_position_2"]]
     ).update_layout(
-        transparent_bg,
-        title = getTitleObj("Number GP Helds by Circuits"),
+        f1db_utils.transparent_bg,
+        title = f1db_utils.getTitleObj("Number GP Helds by Circuits"),
         hovermode = "x"
-    ) if not df.empty else warning_empty_dataframe
+    ) if not df.empty else f1db_utils.warning_empty_dataframe
     
     
     return fig
-
-
-
-
-# BOTTOM GRAPH
-@app.callback(
-    Output("circuits-qualifying", "figure"),
-     Input("circuits-dropdown", "value")
-)
-def circuits_update_qualifying(circuitsIds):
-    if not circuitsIds: 
-        return warning_empty_dataframe
-    
-    df = circuits.get_qualifying_times(circuitsIds)
-
-    # Generare i tickvals automaticamente
-    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=7, base=10)
-    ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
-    
-    return px.line(
-        df,
-        x = "year",
-        y = "timeMillis", # pole,
-        color = "circuitName",
-        markers = True,
-        labels = circuits.labels_dict,
-        hover_data = {
-            "year": False,
-            "timeMillis": False,
-            "time": True,
-            #"officialName": True,
-            "qualifyingFormat": True,
-            "driverName": True
-        },
-        color_discrete_sequence=f1db_utils.custom_colors,
-        template = drivers_template,
-        # TODO per provare a evitare che i colori dei circuiti cambino quando se ne selezionano altri category_orders=
-    ).update_layout(
-        transparent_bg,
-        title = getTitleObj("Pole Lap Time Over the Years"),
-        hovermode = "x",
-        yaxis=dict(
-            tickvals=tickvals,
-            ticktext=ticktext,
-            tickmode='array',
-            title="Lap Time"
-        )
-    ) if not df.empty else warning_empty_dataframe
-    #.for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name])
 
 
 # UP-RIGHT GRAPH
@@ -522,14 +445,12 @@ def circuits_update_quali_race(figure):
      Input("circuits-quali-race-range-id", "value")]
 )
 def circuits_update_quali_race(circuitsId, qualiRange):
-    if len(circuitsId) == 0: return f1db_utils.warning_empty_dataframe
-    # partendo dalle prime 2 file (quattro posizioni o tre) => dove vai a finire
+    if len(circuitsId) == 0: return f1db_utils.f1db_utils.warning_empty_dataframe
+
     global circuits_vars
     df = circuits.get_quali_race(circuitsId)
     circuits_vars["quali_race_range_min"] = df["positionQualifying"].min()
     circuits_vars["quali_race_range_max"] = df["positionQualifying"].max()
-    
-    
     
     # Filter by Qualifying Position Range
     df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
@@ -568,11 +489,11 @@ def circuits_update_quali_race(circuitsId, qualiRange):
         y = 'positionRace', 
         size = 'count',
         labels = circuits.labels_dict,
-        template = drivers_template,
+        template = f1db_utils.template,
         color_discrete_sequence=f1db_utils.custom_colors
     ).update_layout(
-        transparent_bg,
-        title = getTitleObj("Qualifying Position vs Race Position"),
+        f1db_utils.transparent_bg,
+        title = f1db_utils.getTitleObj("Qualifying Position vs Race Position"),
         xaxis = {
             'tickvals': tickvals, 
             'ticktext': ticktext  
@@ -585,7 +506,51 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     )
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
     
-    return fig if len(circuitsId) == 1 else warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
+    return fig if len(circuitsId) == 1 else f1db_utils.warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
+
+
+# BOTTOM GRAPH
+@app.callback(
+    Output("circuits-qualifying", "figure"),
+     Input("circuits-dropdown", "value")
+)
+def circuits_update_qualifying(circuitsIds):
+    if not circuitsIds: 
+        return f1db_utils.warning_empty_dataframe
+    
+    df = circuits.get_qualifying_times(circuitsIds)
+    df = f1db_utils.order_df(df, "circuitId", circuitsIds)
+    
+    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=7, base=10)
+    ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
+    return px.line(
+        df,
+        x = "year",
+        y = "timeMillis", # Pole Lap Time
+        color = "circuitName",
+        markers = True,
+        labels = circuits.labels_dict,
+        hover_data = {
+            "year": False,
+            "timeMillis": False,
+            "time": True,
+            "qualifyingFormat": True,
+            "driverName": True
+        },
+        color_discrete_sequence=f1db_utils.custom_colors,
+        template = f1db_utils.template,
+        # TODO per provare a evitare che i colori dei circuiti cambino quando se ne selezionano altri category_orders=
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        title = f1db_utils.getTitleObj("Pole Lap Time Over the Years"),
+        hovermode = "x",
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext,
+            tickmode='array',
+            title="Lap Time"
+        )
+    ) if not df.empty else f1db_utils.warning_empty_dataframe
 
 # =================2=================
 
@@ -629,10 +594,10 @@ def update_drivers_dropdown(performance_type):
      Input("drivers-performance-min-value-id", "value"),
      Input("drivers-performance-dropdown", "value")]
 )
-def update_drivers_performance(graph_type, performance_type, min_value, selected_driver):
+def update_drivers_performance(graph_type, performance_type, min_value, selected_drivers):
     # print(f"{graph_type} {performance_type}")
     df = []
-    
+    hover_data = {}
     max_val = 0
     if (graph_type == "absolute"):
         if (performance_type == drivers.PERFORMANCE_TYPE_DEFAULT and min_value == drivers.MIN_VALUE_DEFAULT):
@@ -643,7 +608,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 min_value, 
                 "count_podiums" if performance_type == f1db_utils.PerformanceType.PODIUMS.value else "count_position_1"
             )
-            
+        
+        
         title = f"Most F1 {drivers.drivers_dict[performance_type]}"
         match performance_type:
             case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value:
@@ -660,7 +626,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
                 drivers.drivers_dict["count_position_1"] = "1°"
                 max_val = df["count_podiums"].max()
-        
+                hover_data = { "count_podiums": True }
+                # df = df[["driverId", "driverName", "count_podiums", "count_position_3", "count_position_2", "count_position_1"]]
         
         x = "driverName"
         # print(f"{min_value} {max_val}")
@@ -669,16 +636,13 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 x = x, 
                 y = y,
                 labels = drivers.drivers_dict,
-                hover_data = {
-                    # y: drivers_dict[y]
-                    x: False
-                },
-                template = drivers_template,
+                hover_data = hover_data,
+                template = f1db_utils.template,
                 color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
                 color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
             ).update_layout(
-                transparent_bg,
+                f1db_utils.transparent_bg,
                 title = {
                     "text": title,
                     'x':0.5,
@@ -692,34 +656,36 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 lambda t: t.update(name = drivers.drivers_dict[t.name]) if t.name in drivers.drivers_dict else None
             )
         
-            if performance_type == "podiums":
+            print(df.head())
+            if performance_type == f1db_utils.PerformanceType.PODIUMS.value:
+                fig.update_traces(
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=16,
+                    ),
+                    hovertemplate="<b>%{y} / %{customdata[0]}</b><extra></extra>"
+                )
+                fig.data[0].customdata = df[["count_podiums"]].values.tolist()
+                
+                return [fig, max_val, {1: "1", str(max_val): str(max_val)}]
+                
+            else: # wdcs, wins, poles
                 return [fig.update_traces(
                     hoverlabel=dict(
                         bgcolor="white",
                         font_size=16,
                     ),
-                    # customdata = ["1°", "2°", "3°"],
-                    hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
-                            "<extra></extra>"
-                ), max_val, {1: "1", str(max_val): str(max_val)}]
-            else:
-                return [fig.update_traces(
-                    hoverlabel=dict(
-                        bgcolor="white",
-                        font_size=16,
-                    ),
-                    # customdata = ["1°", "2°", "3°"],
-                    hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
+                    hovertemplate="<b>%{y}<br>" + 
                             "<extra></extra>",
                     showlegend=True,
                     name= "1°"
                 ), max_val, {1: "1", str(max_val): str(max_val)}]
         else:
-            return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
+            return [f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
 
-    elif selected_driver is not None: # Performance Trend
-        df = drivers.getTrendPerformance(selected_driver, performance_type)
+    elif selected_drivers is not None: # Performance Trend
+        df = drivers.getTrendPerformance(selected_drivers, performance_type)
         drivers.drivers_dict["progressiveCounter"] = f"{drivers.drivers_dict[performance_type]} Trend"
         
         hover_data = {
@@ -727,6 +693,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
         }
         if performance_type != f1db_utils.PerformanceType.WDCS.value:
             hover_data["officialName"] = True
+        
+        df = f1db_utils.order_df(df, "driverId", selected_drivers)
         
         return [px.line(
             df,
@@ -737,16 +705,16 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             labels = drivers.drivers_dict,
             hover_data = hover_data,
             color_discrete_sequence=f1db_utils.custom_colors,
-            template = drivers_template
+            template = f1db_utils.template
         ).update_layout(
-            transparent_bg,
+            f1db_utils.transparent_bg,
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
-            title = getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
+            title = f1db_utils.getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
             hovermode = "x"
-        ) if not df.empty else warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
+        ) if not df.empty else f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
     else:
-        return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
+        return [f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
     
 # =================3================= 
 

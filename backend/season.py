@@ -128,18 +128,22 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
     selected_drivers_mask = data_in_range["driverId"].isin(driver)
     data_in_range = data_in_range[selected_drivers_mask]
     
+    data_in_range = f1db_utils.order_df(data_in_range, "driverId", driver)
+    
     fig = px.line(data_in_range, 
-                  x="year", 
-                  y=radio_button_value,  
-                  color="driverId", 
-                  color_discrete_sequence=f1db_utils.custom_colors,
-                  height=400)
+        x="year", 
+        y=radio_button_value,  
+        color="driverId", 
+        color_discrete_sequence=f1db_utils.custom_colors,
+        template = f1db_utils.template,
+        height=400
+    )
     fig.update_xaxes(dtick=1, tickmode='linear')
     if (radio_button_value == "positionNumber"):
         fig.update_traces(
             hovertemplate="<br>".join([
                 "Year: %{x}",
-                "Position: %{y}",
+                "Position: %{y}<extra></extra>",
             ])
         )
         fig.update_yaxes(autorange="reversed", title_text='Position')
@@ -147,7 +151,7 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
         fig.update_traces(
             hovertemplate="<br>".join([
                 "Year: %{x}",
-                "Points: %{y}",
+                "Points: %{y}<extra></extra>",
             ])
         )
         fig.update_yaxes(title_text='Points')
@@ -165,17 +169,18 @@ def createSeason_GP_Plot():
     df_count.sort_values(by="year", inplace=True)
     
     fig = px.line(df_count, 
-                  x="year", 
-                  y="value", 
-                  title="GP for year",
-                  markers = True, 
-                  color_discrete_sequence=f1db_utils.custom_colors,
-                  height=400)
+        x="year", 
+        y="value", 
+        title="GP for year",
+        markers = True, 
+        color_discrete_sequence=f1db_utils.custom_colors,
+        template =  f1db_utils.template,
+        height=400)
     fig.update_yaxes(title_text='#GP')
     fig.update_traces(
         hovertemplate="<br>".join([
             "Year: %{x}",
-            "Num Gp: %{y}"
+            "Num Gp: %{y}<extra></extra>"
         ])
     )
     utility.figDesign(fig, "Number Gran Prix for Season")
@@ -211,7 +216,24 @@ def createSeasonGeo():
     'Continent': 'first'
     })
 
-    fig = px.scatter_geo(df_grouped, locations="code", size="Num GP", color='Continent' ,hover_name="id", hover_data={"Num GP" : True, "code" : False}, height=400)
+    fig = px.scatter_geo(df_grouped, 
+        locations="code", 
+        size="Num GP", 
+        color='Continent',
+        hover_name="id", 
+        hover_data={"Num GP" : True, "code" : False}, 
+        height=400,
+        color_discrete_map = {
+            'Africa': "rgb(99, 110, 250)", 
+            'Antarctica': "rgb(239, 85, 59)", 
+            'Asia': "rgb(0, 204, 150)", 
+            "Europe": "rgb(247,1,0)",
+            'Australia': "rgb(171, 99, 250)", 
+            'North America': "rgb(25, 211, 243)", 
+            'South America': "rgb(254, 203, 82)"
+        },
+        category_orders = f1db_utils.continents_order
+    )
     utility.figDesign(fig, "Number GP for country")
 
     fig.update_geos(
@@ -220,7 +242,7 @@ def createSeasonGeo():
         landcolor="rgb(200,212,227)",
         projection_type='orthographic',
         showcoastlines=True,
-        resolution=110
+        resolution=50
     ),
     
     return fig

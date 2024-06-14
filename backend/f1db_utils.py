@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import pandas as pd
 import plotly.express as px
 
 folder = 'f1db-csv'
@@ -18,14 +19,8 @@ seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 MONTH_END_SEASON = 12
 INFINITE_RESULT = 100
 MAX_QUALI = 30
-custom_colors = px.colors.qualitative.Light24.copy()
-custom_colors[0] = "rgb(247,1,0)"
+F1_RED = "rgb(247,1,0)"
 
-podium_colors = {
-    "count_position_1": "gold",
-    "count_position_2": "silver",
-    "count_position_3": "peru"
-}
 
 class PerformanceType(Enum):
     WDCS = "wdcs"
@@ -33,9 +28,31 @@ class PerformanceType(Enum):
     PODIUMS = "podiums"
     POLES = "poles"
     
+    
+# ===============COLORS=====================
+custom_colors = px.colors.qualitative.Light24.copy()
+custom_colors[0] = F1_RED
+
+podium_colors = {
+    "count_position_1": "gold",
+    "count_position_2": "silver",
+    "count_position_3": "peru"
+}
+
+transparent_bg = {
+    "plot_bgcolor": "rgba(0,0,0,0)",
+    "paper_bgcolor": "rgba(0,0,0,0)"
+}
+
+# ===========================================
+
+
+    
 
 # ==================FIGURES==================
 
+template = "plotly_dark"
+    
 warning_empty_dataframe = {
     "layout": {
         "xaxis": {"visible": False},
@@ -50,6 +67,20 @@ warning_empty_dataframe = {
     }
 }
 
+def getTitleObj(titleStr):
+    return {
+        "text": titleStr,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top',
+        'font': {'size': 18 }
+    }
+
+continents_order = {
+    "continentId": ['africa', 'antarctica', 'asia', 'australia', 'europe', 'north-america', 'south-america'],
+    "continentName": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
+}
+
 # ===========================================
 
 
@@ -58,6 +89,16 @@ warning_empty_dataframe = {
 
 
 # ==================FUNCTIONS==================
+
+# Function to subset and order a pandas dataframe for a long format
+# It does NOT change colors when adding new elements to a graph
+def order_df(df_input, order_by, order):
+    df_output=pd.DataFrame()
+    for var in order:    
+        df_append=df_input[df_input[order_by]==var].copy()
+        df_output = pd.concat([df_output, df_append])
+    return(df_output)
+
 
 def currentSeasonCheckMask(df, performanceType):
     return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS else True
@@ -71,13 +112,17 @@ def get_p1_mask(df, performanceType):
     #       (e.g. season 2024 , current date Dec 2024 | OK, same year but season is over)
     return (df["positionNumber"] == 1.0) & currentSeasonCheckMask(df, performanceType)
 
-
-
 # Funzione per convertire millisecondi in "minutes:seconds:milliseconds"
 def ms_to_time(ms):
     minutes = int(ms // 60000)
     seconds = int((ms % 60000) // 1000)
     milliseconds = int(ms % 1000)
     return f"{minutes}:{seconds:02}:{milliseconds:03}"
+
+# ===========================================
+
+
+# ==================DRIVERS==================
+
 
 # ===========================================
