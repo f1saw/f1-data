@@ -200,7 +200,7 @@ def get_qualifying_times(selected_circuits):
 # UI
 circuits_gp_held_min_value = dcc.Slider(
     id='circuits-gp-held-min-value-id',
-    min=0,
+    min=1,
     step=1,
     value=0,
     tooltip={"placement": "bottom", "always_visible": True}

@@ -117,12 +117,12 @@ def getWorldSpread():
     #print(df_drivers_entrants.tail())
     
     
-    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","countryOfBirthCountryId"]), inplace=True)
-    df_drivers_info.rename(columns={"id":"driverId"}, inplace=True)
+    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","name","nationalityCountryId"]), inplace=True)
+    df_drivers_info.rename(columns={"id":"driverId", "name": "driverName"}, inplace=True)
     #print(df_drivers_info.tail())
     
     df_countries.drop(columns=df_countries.columns.difference(["id", "alpha3Code", "name", "continentId"]), inplace=True)
-    df_countries.rename(columns={"id":"countryOfBirthCountryId", "name":"countryName"}, inplace=True)
+    df_countries.rename(columns={"id":"nationalityCountryId", "name":"countryName"}, inplace=True)
     # print(df_countries.tail())
     
     df_continents.drop(columns=df_continents.columns.difference(["id", "name"]), inplace=True)
@@ -130,11 +130,12 @@ def getWorldSpread():
     # print(df_continents.tail())
     
     df_merged = pd.merge(df_drivers_entrants, df_drivers_info, on="driverId", how="left")
-    df_merged = pd.merge(df_merged, df_countries, on="countryOfBirthCountryId", how="left")
+    df_merged = pd.merge(df_merged, df_countries, on="nationalityCountryId", how="left")
     df_merged = pd.merge(df_merged, df_continents, on="continentId", how="left")
     df_merged["count"] = df_merged.groupby(["year","alpha3Code"])["driverId"].transform("count")
     df_merged["count_display"] = df_merged["count"]
-    df_merged.drop(columns=["driverId"], inplace=True)
+    
+    
     
 
     # print(df_merged.tail())
@@ -271,7 +272,7 @@ drivers_performance_type_radio = dbc.RadioItems(
 
 drivers_performance_min_value = dcc.Slider(
     id='drivers-performance-min-value-id',
-    min=0,
+    min=1,
     # max=100,  # Un valore molto grande per simulare l'infinito
     step=1,
     value=0,

@@ -52,6 +52,28 @@ def getTitleObj(titleStr):
     }
 
 
+# Needed to handle hovertemplate properly
+def format_driver_info(driver_info):
+    max_display = 5 # TODO => make it as a const
+    if len(driver_info) > max_display:
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info[:max_display]]) + f'<br>and {len(driver_info) - max_display} more'
+    else:
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info])
+    
+# drivers.drivers_dfs["worldSpread"].sort_values(by="driverName", inplace=True)
+driver_info = drivers.drivers_dfs["worldSpread"].groupby(['nationalityCountryId','year']).apply(
+    lambda x: [{'driverName': row['driverName']} for idx, row in x.iterrows()]
+).reset_index(name='driverInfo')
+
+drivers.drivers_dfs["worldSpread"] = pd.merge(drivers.drivers_dfs["worldSpread"], driver_info, on=['nationalityCountryId','year'], how="left")
+drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
+
+drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
+# print(drivers.drivers_dfs["worldSpread"].head(10))
+print(drivers.drivers_dfs["worldSpread"][drivers.drivers_dfs["worldSpread"]["nationalityCountryId"] == "monaco"])
+
+
+
 
 # DRIVERS STATIC FIGURES (TODO => maybe put them in frontend file)
 drivers_figures = {
@@ -87,9 +109,16 @@ drivers_figures = {
         labels = {
             "continentName": "Continent",
             "year": "Year",
-            "count_display": "Number of Drivers"
+            "count_display": "Number of Drivers",
+            "countryName": "Country",
+            "count": "Number of Drivers",
+            "driverInfo": "Drivers"
         },
         hover_data = {
+            'countryName': True,
+            'continentName': True,
+            'count': True,
+            'driverInfo': True,
             "alpha3Code": False,
             "year": False
         },
@@ -101,23 +130,28 @@ drivers_figures = {
         transparent_bg,
         height=500,
         title = {
-            "text": "Spread of Drivers Nationalities Over the Years",
+            "text": "Spread of Drivers' Nationalities Over the Years",
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top',
             'font': {'size': 18 }
         },
+    ).update_traces(
+        hovertemplate='<b>%{customdata[0]}</b>, %{customdata[1]}<br><br>' + # countryName, continentName
+            '<b>%{customdata[2]}</b><br>' + # count
+            '%{customdata[3]}' # driversName
     ).update_geos(
-         bgcolor="rgba(0,0,0,0)",
+        bgcolor="rgba(0,0,0,0)",
         showland=True, 
         landcolor="rgb(200,212,227)",
         projection_type='orthographic',
         showcoastlines=True,
-        resolution=110
+        resolution=50
     ), 
 }
-# my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
 
+drivers_figures["worldSpread"].data[0].customdata = drivers.drivers_dfs["worldSpread"][["countryName", "continentName", "count"]].values.tolist()
+# my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
 
 
 # TABS STRUCTURE
@@ -376,7 +410,7 @@ def update_option_dropdown(slider_value, radio_value):
 
 # =================2================= CIRCUITS
 circuits_vars = {
-    "gp_held_max": 0,
+    "gp_held_max": 1,
     "quali_race_range_min": -10,
     "quali_race_range": [-10,50],
     "quali_race_range_max": 50,
@@ -386,7 +420,7 @@ circuits_vars = {
     Output("circuits-gp-held-min-value-id", "marks")],
     Input("circuits-gp-held", "figure"))
 def circuits_update_slider_marks(figure):
-    return [circuits_vars["gp_held_max"], {0:"0", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
+    return [circuits_vars["gp_held_max"], {1:"1", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
 
 
 # UP-LEFT GRAPH
@@ -499,10 +533,8 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     
     # Filter by Qualifying Position Range
     df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
-
-
-
     df.sort_values(by="raceId", inplace=True, ascending=False)
+    
     total_qualifying = df['positionQualifying'].value_counts().reset_index()
     total_qualifying.columns = ['positionQualifying', 'total']
 
@@ -510,46 +542,34 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
 
 
-    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
-        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
-    ).reset_index(name='raceDriverInfo')
-    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
-
-  
-    
+    # Needed to handle hovertemplate properly
     def format_race_driver_info(race_driver_info):
-        max_display = 5
+        max_display = 5 # TODO => make it as a const
         if len(race_driver_info) > max_display:
             return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info[:max_display]]) + f'<br>and {len(race_driver_info) - max_display} more'
         else:
             return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info])
-
+        
+    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
+        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
+    ).reset_index(name='raceDriverInfo')
+    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
     freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(format_race_driver_info)
     freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
-    
-    #print(freq_df.head())
- 
-    
-    
-    
-    
     
     freq_df.reset_index(inplace=True)
     freq_df.drop(columns=["index"], inplace=True)
     
-    
     tickvals = np.linspace(circuits_vars["quali_race_range_min"], circuits_vars["quali_race_range_max"], circuits_vars["quali_race_range_max"])
     ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else "NQ" for val in tickvals]
-         
-         
-                    
+                 
     fig = px.scatter(freq_df, 
         x = 'positionQualifying', 
         y = 'positionRace', 
         size = 'count',
         labels = circuits.labels_dict,
         template = drivers_template,
-        color_discrete_sequence=f1db_utils.custom_colors,
+        color_discrete_sequence=f1db_utils.custom_colors
     ).update_layout(
         transparent_bg,
         title = getTitleObj("Qualifying Position vs Race Position"),
@@ -557,21 +577,13 @@ def circuits_update_quali_race(circuitsId, qualiRange):
             'tickvals': tickvals, 
             'ticktext': ticktext  
         }
-    )
-    
-    
-    fig.update_traces(hovertemplate=
-        'Q: <b>%{x}</b><br>R: <b>%{y}</b><br>Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
+    ).update_traces(
+        hovertemplate='Q: <b>%{x}</b><br>' + 
+        'R: <b>%{y}</b><br>' + 
+        'Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
         '%{customdata[2]}'
     )
-    
-    
-    # Aggiungere i raceId come customdata
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
-    
-    
-    
-    
     
     return fig if len(circuitsId) == 1 else warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
 
@@ -596,7 +608,7 @@ def toggle_dropdown(selected_value):
         return [None,{'display': 'none'}]
     
     
-# UPDATE DRIVERS DROPDOWN
+# Update Drivers Dropdown
 @app.callback(
     Output("drivers-performance-dropdown", "options"),
     Input("radio-drivers-performance-type-id", "value"),
@@ -607,6 +619,7 @@ def update_drivers_dropdown(performance_type):
     ]
 
 
+# BOTTOM GRAPH
 @app.callback(
     [Output("drivers-performance", "figure"),
      Output("drivers-performance-min-value-id", "max"),
@@ -688,7 +701,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                     # customdata = ["1°", "2°", "3°"],
                     hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
                             "<extra></extra>"
-                ), max_val, {0: "0", str(max_val): str(max_val)}]
+                ), max_val, {1: "1", str(max_val): str(max_val)}]
             else:
                 return [fig.update_traces(
                     hoverlabel=dict(
@@ -700,9 +713,9 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                             "<extra></extra>",
                     showlegend=True,
                     name= "1°"
-                ), max_val, {0: "0", str(max_val): str(max_val)}]
+                ), max_val, {1: "1", str(max_val): str(max_val)}]
         else:
-            return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+            return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
 
     elif selected_driver is not None: # Performance Trend
@@ -729,10 +742,10 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
             title = getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
             hovermode = "x"
-        ) if not df.empty else warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+        ) if not df.empty else warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
     else:
-        return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+        return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
     
 # =================3================= 
 
