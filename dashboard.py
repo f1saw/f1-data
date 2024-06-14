@@ -351,17 +351,17 @@ def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_va
 @app.callback(
     [Output('teams-slider', 'max'),
      Output('teams-slider', 'min'),
-     Output('teams-slider', 'marks')],
+     Output('teams-slider', 'marks'),
+     Output('teams-slider', 'value')],
         Input('radio-input-teams', 'value'))
 def update_teams_slider(radio_input):
+    value = teams.updateSliderValue()
     if (radio_input == "win"):
-        return 16, 1, {i: str(i) for i in range(1, 16+1)}
-    #elif(radio_input == "best race"):
-     #   return 32, 1, {i: str(i) for i in range(1, 32+1)}
+        return value['win_max_slider'], 1, {0:"1", str(value['win_max_slider']):str(value['win_max_slider'])}, 1
     elif(radio_input == "win race"):
-        return 20, 1, {i: str(i) for i in range(1, 20+1)}
+        return value['win_race_max_slider'], 1, {0:"1", str(value['win_race_max_slider']):str(value['win_race_max_slider'])}, 1
     else:
-        return 37, 1, {i: str(i) for i in range(1, 37+1)}
+        return value['podiums_max_slider'], 1, {0:"1", str(value['podiums_max_slider']):str(value['podiums_max_slider'])}, 1
 
 
 @callback(Output('dropdown_col', 'children'),

@@ -118,6 +118,25 @@ def createSlider():
         marks={i: str(i) for i in range(32)},
     )
 
+def updateSliderValue():
+    SliderValue = {
+        "win_max_slider": 0,
+        "win_race_max_slider": -10,
+        "podiums_max_slider": [-10,50]
+    }
+    df = getTeamsData()
+    df.sort_values(by='totalChampionshipWins', ascending=False, inplace=True)
+    SliderValue['win_max_slider'] = df['totalChampionshipWins'].max()
+
+    df = getTeamsData()
+    df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
+    SliderValue['win_race_max_slider'] = df['totalRaceWins'].max()
+
+    df = getTeamsData()
+    df.sort_values(by='totalPodiums', ascending=False, inplace=True)
+    SliderValue['podiums_max_slider'] = df['totalPodiums'].max()
+    return SliderValue
+
 
 def createWinConstructorPlot(min_value = 0):
     df = getTeamsData()
@@ -140,18 +159,6 @@ def createWinConstructorPlot(min_value = 0):
     )
     return fig
 
-def createRaceConstructPlot(min_value = 0):
-    df = getTeamsData()
-    df.sort_values(by='bestRaceResult', ascending=False, inplace=True)
-    if (min_value is None):
-        min_value = 1
-    df = df.loc[df['bestRaceResult'] <= min_value]
-    fig = px.bar(df, x='fullName', y='bestRaceResult',
-                color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
-                color_discrete_map=utility.colors,
-                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
-    utility.figDesign(fig, "Best Race Result")
-    return fig
 
 def createRaceWinPlot(min_value = 0):
     df = getTeamsData()
