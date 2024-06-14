@@ -31,7 +31,7 @@ class PerformanceType(Enum):
     WDCS = "wdcs",
     WINS = "wins",
     PODIUMS = "podiums",
-    POLE = "poles"
+    POLES = "poles"
     
 
 # ==================FIGURES==================
@@ -60,7 +60,7 @@ warning_empty_dataframe = {
 # ==================FUNCTIONS==================
 
 def currentSeasonCheckMask(df, performanceType):
-    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == "wdcs" else True
+    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS else True
 
 def get_p1_mask(df, performanceType):
     # If "WDCS" , current year must not count as won world driver championship, to take into account the data:
