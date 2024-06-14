@@ -138,7 +138,7 @@ app.layout = html.Div([
     html.H1('F1-DATA', className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
-            value=tabs_children[3].value, 
+            value=tabs_children[2].value, 
             children=tabs_children, 
             parent_className='custom-tabs', className='pt-5 custom-tabs-container',
             colors={
@@ -237,13 +237,17 @@ def render_content(tab):
                             dbc.Row([
                                 dbc.Col(html.Label("Min Value"), width=2),
                                 dbc.Col(drivers.drivers_performance_min_value, width=7) 
-                            ]),
+                            ], id="drivers-min-value-id"),
                             dbc.Col(drivers.drivers_performance_dropdown, width=9)
                         ], width=4)
                     ]),
                     dcc.Graph(id="drivers-performance")
                 ])
             ])
+            
+            
+            
+        # TEAMS
         case 'tab-3-teams':
             return html.Div([
                 html.Hr(),
@@ -578,6 +582,31 @@ def circuits_update_quali_race(circuitsId, qualiRange):
 
 
 # =================3================= DRIVERS
+# IF "absolute" graph => HIDE drivers dropdown | SHOW min value slider
+# IF "trend"    graph => SHOW drivers dropdown | HIDE min value slider
+@app.callback(
+    [Output('drivers-performance-dropdown', 'style'),
+     Output('drivers-min-value-id', 'style')],
+    Input('drivers-performance-type-graph-id', 'value')
+)
+def toggle_dropdown(selected_value):
+    if selected_value == "absolute":
+        return [{'display': 'none'},None]
+    else:
+        return [None,{'display': 'none'}]
+    
+    
+# UPDATE DRIVERS DROPDOWN
+@app.callback(
+    Output("drivers-performance-dropdown", "options"),
+    Input("radio-drivers-performance-type-id", "value"),
+)
+def update_drivers_dropdown(performance_type):    
+    return [
+        {"label":row["driverName"], "value": row["driverId"]} for row in drivers.getDrivers(performance_type).to_dict(orient="records")
+    ]
+
+
 @app.callback(
     [Output("drivers-performance", "figure"),
      Output("drivers-performance-min-value-id", "max"),
@@ -588,7 +617,7 @@ def circuits_update_quali_race(circuitsId, qualiRange):
      Input("drivers-performance-dropdown", "value")]
 )
 def update_drivers_performance(graph_type, performance_type, min_value, selected_driver):
-    print(f"{graph_type} {performance_type}")
+    # print(f"{graph_type} {performance_type}")
     df = []
     
     max_val = 0
@@ -599,21 +628,21 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             df = drivers.getAbsolutePerformance(
                 performance_type, 
                 min_value, 
-                "count_podiums" if performance_type == f1db_utils.PerformanceType.PODIUMS else "count_position_1"
+                "count_podiums" if performance_type == f1db_utils.PerformanceType.PODIUMS.value else "count_position_1"
             )
             
         title = f"Most F1 {drivers.drivers_dict[performance_type]}"
         match performance_type:
-            case f1db_utils.PerformanceType.WDCS | f1db_utils.PerformanceType.WINS | f1db_utils.PerformanceType.POLES:
+            case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value:
                 # Keep only 1st place results, already done with poles
-                if performance_type != f1db_utils.PerformanceType.POLES:
+                if performance_type != f1db_utils.PerformanceType.POLES.value:
                     df = df[df["count_position_1"] != 0] 
                 df.sort_values(by=["count_position_1"], ascending=False, inplace=True)         
                 y = "count_position_1"
                 drivers.drivers_dict["count_position_1"] = f"Number of {drivers.drivers_dict[performance_type]}"
                 max_val = df[y].max()
                 
-            case f1db_utils.PerformanceType.PODIUMS:
+            case f1db_utils.PerformanceType.PODIUMS.value:
                 df.sort_values(by=["count_podiums"], ascending=False, inplace=True)
                 y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
                 drivers.drivers_dict["count_position_1"] = "1°"
@@ -677,14 +706,13 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
 
 
     elif selected_driver is not None: # Performance Trend
-        print("AA")
         df = drivers.getTrendPerformance(selected_driver, performance_type)
         drivers.drivers_dict["progressiveCounter"] = f"{drivers.drivers_dict[performance_type]} Trend"
         
         hover_data = {
             drivers.performanceType2TimeAxis[performance_type]: False
         }
-        if performance_type != f1db_utils.PerformanceType.WDCS:
+        if performance_type != f1db_utils.PerformanceType.WDCS.value:
             hover_data["officialName"] = True
         
         return [px.line(

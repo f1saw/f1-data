@@ -28,9 +28,9 @@ podium_colors = {
 }
 
 class PerformanceType(Enum):
-    WDCS = "wdcs",
-    WINS = "wins",
-    PODIUMS = "podiums",
+    WDCS = "wdcs"
+    WINS = "wins"
+    PODIUMS = "podiums"
     POLES = "poles"
     
 

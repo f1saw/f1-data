@@ -180,7 +180,7 @@ def get_qualifying_times(selected_circuits):
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
     df = pd.merge(df, df_circuits, on="circuitId", how="left")
     
-    df = df[f1db_utils.get_p1_mask(df, f1db_utils.PerformanceType.POLES)]
+    df = df[f1db_utils.get_p1_mask(df, f1db_utils.PerformanceType.POLES.value)]
     selected_circuits_mask = df["circuitId"].isin(selected_circuits)
     df = df[selected_circuits_mask]
     df["time"] = df["time"].fillna(df["q3"])

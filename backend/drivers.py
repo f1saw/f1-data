@@ -10,7 +10,7 @@ import backend.f1db_utils as f1db_utils
 
 MIN_VALUE_DEFAULT = 0
 COL_TO_APPLY_MIN_DEFAULT = "count_position_1"
-PERFORMANCE_TYPE_DEFAULT = f1db_utils.PerformanceType.WDCS
+PERFORMANCE_TYPE_DEFAULT = f1db_utils.PerformanceType.WDCS.value
 MONTH_END_SEASON = 12
 
 # TODO => wins, podiums, poles as ENUM
@@ -35,10 +35,10 @@ drivers_dict = {
 }
 
 performanceType2file = {
-    f1db_utils.PerformanceType.WDCS: f1db_utils.seasons_driver_standings,
-    f1db_utils.PerformanceType.WINS: f1db_utils.races_results,
-    f1db_utils.PerformanceType.PODIUMS: f1db_utils.races_results,
-    f1db_utils.PerformanceType.POLES: f1db_utils.qualifying_results
+    f1db_utils.PerformanceType.WDCS.value: f1db_utils.seasons_driver_standings,
+    f1db_utils.PerformanceType.WINS.value: f1db_utils.races_results,
+    f1db_utils.PerformanceType.PODIUMS.value: f1db_utils.races_results,
+    f1db_utils.PerformanceType.POLES.value: f1db_utils.qualifying_results
 }
 
 performanceType2TimeAxis = {
@@ -50,7 +50,7 @@ performanceType2TimeAxis = {
 
 
 def currentSeasonCheckMask(df, performanceType):
-    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == f1db_utils.PerformanceType.WDCS else True
+    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == f1db_utils.PerformanceType.WDCS.value else True
 
 # FUNCTIONS
 def get_p1_mask(df, performanceType):
@@ -65,9 +65,9 @@ def get_p1_mask(df, performanceType):
     
 def performanceType2Mask(df, performanceType):
     match performanceType:
-        case f1db_utils.PerformanceType.WDCS | f1db_utils.PerformanceType.WINS | f1db_utils.PerformanceType.POLES: 
+        case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value: 
             return get_p1_mask(df, performanceType)
-        case f1db_utils.PerformanceType.PODIUMS:
+        case f1db_utils.PerformanceType.PODIUMS.value:
             return (df["positionNumber"] <= 3.0) 
 
 
@@ -77,8 +77,9 @@ def getDrivers(filterFlag = None):
     df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True) # TODO => al più nazionalità
     
     if filterFlag is not None: # e.g. WDCs => return only drivers who have won at least one WDCs
-        print(filterFlag)
-        # df = getTrendPerformance(df["driverId"].to_numpy(), filterFlag)
+        df = getTrendPerformance(df["driverId"].to_numpy(), filterFlag)
+        df = df.drop_duplicates(subset=['driverId', 'driverName'])
+        df = df.sort_values(by="driverName")
     
     # print(df.head())
     return df
@@ -152,7 +153,7 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     
     #print(performanceType.upper())
     match performanceType:
-        case f1db_utils.PerformanceType.WINS | f1db_utils.PerformanceType.PODIUMS:
+        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value:
             podium_mask = (df["positionNumber"] == 1) | (df["positionNumber"] == 2) | (df["positionNumber"] == 3)
             df = df[podium_mask]
             for place in [1,2,3]:
@@ -161,7 +162,7 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
             df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
             df.drop_duplicates(subset=["driverId","count_position_1","count_position_2","count_position_2"], inplace=True)
         
-        case f1db_utils.PerformanceType.WDCS | f1db_utils.PerformanceType.POLES:
+        case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.POLES.value:
             df = df[get_p1_mask(df, performanceType)]
             for place in [1]:
                 df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum())
@@ -198,8 +199,8 @@ def count_podiums(row):
     return counter[row["driverId"]] 
 
 def getTrendPerformance(selected_drivers, performanceType):
-    print("======================================")
-    print(f"{selected_drivers} - {performanceType}")
+    # print("======================================")
+    # print(f"{selected_drivers} - {performanceType}")
     df = pd.read_csv(f"{f1db_utils.folder}/{performanceType2file[performanceType]}")
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
@@ -219,10 +220,10 @@ def getTrendPerformance(selected_drivers, performanceType):
     #df = df[get_p1_mask(df, performanceType)]
     df.reset_index(inplace=True)
     match performanceType:
-        case f1db_utils.PerformanceType.WDCS:
+        case f1db_utils.PerformanceType.WDCS.value:
             df.drop(columns=["index","positionDisplayOrder","positionText","points"], inplace=True)
         
-        case f1db_utils.PerformanceType.WINS | f1db_utils.PerformanceType.PODIUMS | f1db_utils.PerformanceType.POLES:
+        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value | f1db_utils.PerformanceType.POLES.value:
             df.drop(columns=df.columns.difference(["raceId","driverId","positionNumber"]), inplace=True)
             df_races = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.races}")
             df_races.rename(columns={"id":"raceId"}, inplace=True)
@@ -234,7 +235,7 @@ def getTrendPerformance(selected_drivers, performanceType):
          
     for driver_id in selected_drivers:
         counter[driver_id] = 0
-    df["progressiveCounter"] = df.apply(count_p1 if performanceType != f1db_utils.PerformanceType.PODIUMS else count_podiums, axis=1)
+    df["progressiveCounter"] = df.apply(count_p1 if performanceType != f1db_utils.PerformanceType.PODIUMS.value else count_podiums, axis=1)
     
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
     # print(df.head())
@@ -259,12 +260,12 @@ drivers_performance_type_graph_radio = dbc.RadioItems(
 drivers_performance_type_radio = dbc.RadioItems(
     id="radio-drivers-performance-type-id",
     options=[
-        {"label": "WDCs", "value": f1db_utils.PerformanceType.WDCS},
-        {"label": "Wins", "value": f1db_utils.PerformanceType.WINS},
-        {"label": "Podiums", "value": f1db_utils.PerformanceType.PODIUMS},
-        {"label": "Poles", "value": f1db_utils.PerformanceType.POLES}
+        {"label": "WDCs", "value": f1db_utils.PerformanceType.WDCS.value},
+        {"label": "Wins", "value": f1db_utils.PerformanceType.WINS.value},
+        {"label": "Podiums", "value": f1db_utils.PerformanceType.PODIUMS.value},
+        {"label": "Poles", "value": f1db_utils.PerformanceType.POLES.value}
     ],
-    value=f1db_utils.PerformanceType.WDCS,
+    value=f1db_utils.PerformanceType.WDCS.value,
     inline=True
 )
 
