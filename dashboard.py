@@ -4,10 +4,11 @@ from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import numpy as np
 
-import season
+import backend.season as season
 import backend.drivers as drivers
 import backend.circuits as circuits
 import backend.f1db_utils as f1db_utils
+import backend.teams as teams
 
 # TODO chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
 # leggere da ./f1db-csv/
@@ -107,12 +108,13 @@ drivers_figures = {
             'font': {'size': 18 }
         },
     ).update_geos(
-        bgcolor="rgba(0,0,0,0)",
-        showland=True, landcolor="rgb(200,212,227)",
+         bgcolor="rgba(0,0,0,0)",
+        showland=True, 
+        landcolor="rgb(200,212,227)",
+        projection_type='orthographic',
+        showcoastlines=True,
         resolution=110
-    ),
-
-    
+    ), 
 }
 # my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
 
@@ -158,15 +160,22 @@ def render_content(tab):
         case 'tab-0-seasons':
             return html.Div([
                 #html.H3('Tab content 1'),
-                season.createDropDown(),
                 html.Hr(),
+                dbc.Row([
+                    dbc.Col(
+                        dcc.Graph(id="season_GP_graph", figure=season.createSeason_GP_Plot())
+                    ),
+                    dbc.Col(
+                        dcc.Graph(id="season_Geo_graph", figure=season.createSeasonGeo())
+                    )
+                ]),
                 html.Div(
-                    #season.crateDriverElement([1950, 1955]),
+                    season.crateDriverElement([1950, 1955]),
                     id="range_div"
                 ),
                 dbc.Row(
                     dbc.Col(
-                        dcc.Graph(id="season_graph", figure=season.createSeasonGeo())
+                        dcc.Graph(id="season_graph") #figure=season.createSeasonDriverPlot())
                     )
                 )
             ], className="d-flex flex-column justify-content-between gap-2")
@@ -235,6 +244,49 @@ def render_content(tab):
                     dcc.Graph(id="drivers-performance")
                 ])
             ])
+        case 'tab-3-teams':
+            return html.Div([
+                html.Hr(),
+                dbc.Row([
+                    dbc.Col(
+                        dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear())
+                    ),
+                    dbc.Col(
+                        dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo())
+                    )
+                ]),
+                html.Hr(),
+                dbc.Row([
+                    dbc.Col(
+                    dbc.Stack([
+                                html.Label("Performance Type"),
+                                teams.createRadioButtonGraph()
+                            ], direction="horizontal", gap=3),
+                    width=3),
+                    dbc.Col(
+                        teams.createDropdown(),
+                        width=6,
+                        id = "dropdown_col"
+                    ),
+                ]),
+                dbc.Row([
+                    dbc.Col(
+                        dbc.Stack([
+                                html.Label("Performance Type"),
+                                teams.createRadioButton(),
+                        ], direction="horizontal", gap=3),
+                        width=3),
+                    dbc.Col(
+                        teams.createSlider()
+                         #style={'marginRight': 30}
+                    )
+                ],style={'marginRight': 38, 'marginLeft': 42}),
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
+                    )
+                )
+            ])
         
         # DEFAULTS
         case _:
@@ -250,31 +302,66 @@ def render_content(tab):
 
 
 # =================1================= SEASONS
-@callback(Output('range_div', 'children'),
-              Input('dropdown', 'value'))
-def update_graph(dropdown):
-    if (dropdown == "Season Driver"):
-        return season.crateDriverElement([1990, 1995])
-    return
-         
 @callback(Output('dropdown_drivers', 'options'),
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
         return season.updateDropDownDrivers(slider_value)
 
-
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
-               Input('dropdown', 'value'),
                Input('range-slider', 'value'),
-               Input('dropdown_drivers', 'value')])
-def update_graph(radio_value, dropdown_value, range_value, driver):
-    if (dropdown_value == "Season Gran Prix"):
-        return season.createSeason_GP_Plot()
-    elif (dropdown_value == "Season Driver"):
-        return season.createSeasonDriverPlot(radio_value, range_value, driver)  
+               Input('dropdown_drivers', 'value'),
+               Input('dropdown_drivers', 'options')])
+def update_graph(radio_value, range_value, driver, option):
+    print(option[0]['value'])
+    if(driver == []):
+        driver = option[0]['value']
+    return season.createSeasonDriverPlot(radio_value, range_value, driver) 
+ 
+#### 
+# 
+#  CALLBACK TEAMS
+#   
+@callback(Output('teams_graph', 'figure'),
+             [Input('radio-input-teams', 'value'),
+              Input('teams-slider', 'value'),
+              Input('radio-input-graph', 'value'),
+              Input('dropdown', 'value')])
+def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_value):
+    if (radio_graph_value == 'trend'):
+        return teams.createConstructorTrend(radio_value, dropdown_value)
     else:
-        return season.createSeasonGeo() 
+        if (radio_value == 'win'):
+            return teams.createWinConstructorPlot(slider_value)
+        #elif(radio_value == "best race"):
+        #   return teams.createRaceConstructPlot(slider_value)
+        elif(radio_value == "win race"):
+            return teams.createRaceWinPlot(slider_value)
+        else:
+            return teams.createTotalPodiumPlot(slider_value)
+
+# TODO -> prendere dinamicamente i valori 16, 32 etc
+@app.callback(
+    [Output('teams-slider', 'max'),
+     Output('teams-slider', 'min'),
+     Output('teams-slider', 'marks')],
+        Input('radio-input-teams', 'value'))
+def update_teams_slider(radio_input):
+    if (radio_input == "win"):
+        return 16, 1, {i: str(i) for i in range(1, 16+1)}
+    #elif(radio_input == "best race"):
+     #   return 32, 1, {i: str(i) for i in range(1, 32+1)}
+    elif(radio_input == "win race"):
+        return 20, 1, {i: str(i) for i in range(1, 20+1)}
+    else:
+        return 37, 1, {i: str(i) for i in range(1, 37+1)}
+
+
+@callback(Output('dropdown_col', 'children'),
+             [Input('teams-slider', 'value'),
+              Input('radio-input-teams', 'value')])
+def update_option_dropdown(slider_value, radio_value):
+    return teams.createDropdown(slider_value, radio_value)
 
 # =================1================= 
 

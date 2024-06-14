@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 
 import os
 from datetime import datetime
+import utility.utility as utility
 
 # selezione anni -> prendo piloti in quegli anni e si vede come variano nel tempo i piazzamenti finali
 # numero di gp fatti
@@ -20,13 +21,10 @@ def getSeasonData():
                 "f1db-grands-prix.csv",
                 "f1db-countries.csv"]
     df_list = {}
-    df_list["df_season_costurct"] = [], 
-    df_list["df_season_gp"] = []
-
 
     i=0
     for path in csv_file:
-        df_list[i] = pd.read_csv(directory_path + "/f1db-csv/" + path)
+        df_list[i] = pd.read_csv(directory_path + "/../f1db-csv/" + path)
         #print(df_list[i])
         i += 1
     
@@ -64,7 +62,7 @@ def createRadioButtonDriver():
                       # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
                       id="radio-input",
-                      style={'marginBottom': 20, 'marginLeft': 7}
+                      style={'marginLeft': 7, 'marginTop': 10}
                 )
 
 def createRangeSlider():
@@ -74,26 +72,26 @@ def createRangeSlider():
                            1, 
                            value=[1990, 1995], 
                            marks=marks, 
-                           id='range-slider'
+                           id='range-slider',
                     )
 
-def createDropDownDrivers(slider_value):
+def createDropDownDrivers(slider_value=[1990, 1995]):
     data = getSeasonDrivingStanding()
-    # print(slider_value)
+
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
     return dcc.Dropdown(
-    id='dropdown_drivers',
-    options = [{'label': value, 'value': value} for value in data_in_range ],
-    value=[data_in_range[0]],
-    multi=True,
-    style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
+        id='dropdown_drivers',
+        options = [{'label': value, 'value': value} for value in data_in_range ],
+        value=['ayrton-senna', 'alain-prost'],
+        multi=True,
+        style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
     )
 
 def updateDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
-    # print(slider_value)
+
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
@@ -103,27 +101,27 @@ def crateDriverElement(slider_value):
     if (slider_value is None):
         slider_value = [1990, 1995]
     return html.Div([
-                    createRadioButtonDriver(),
-                    createRangeSlider(),
-                    createDropDownDrivers(slider_value)
+                dbc.Row(
+                    createRangeSlider()
+                ),
+                dbc.Row([
+                    dbc.Col(
+                        createRadioButtonDriver(),
+                        className="col-3",
+                    ), 
+                    dbc.Col(
+                        createDropDownDrivers(slider_value),
+                        className="col-6"
+                    )
+                ], style={'marginTop': 15}),
                 ])
 
 
-def createDropDown():
-    return dcc.Dropdown(
-    id='dropdown',
-    options=[
-        {'label': 'Season Map', 'value': 'Season Map'},
-        {'label': 'Season Driver', 'value': 'Season Driver'},
-        {'label': 'Season Gran Prix', 'value': 'Season Gran Prix'}
-    ],
-    value='Season Map',
-    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
-)
-
-def createSeasonDriverPlot(radio_button_value, slider_value, driver):
+def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1990, 1995], driver=['']):
     data = getSeasonDrivingStanding()
-    #TODO: far scegliere l'anno
+    if isinstance(driver, str):
+        driver = [driver]
+   
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     
     selected_drivers_mask = data_in_range["driverId"].isin(driver)
@@ -133,7 +131,10 @@ def createSeasonDriverPlot(radio_button_value, slider_value, driver):
     fig.update_xaxes(dtick=1, tickmode='linear')
     #fig = px.scatter(data_in_range, x="year", y=radio_button_value, title="Andamento piloti", color="driverId")
     if (radio_button_value == "positionNumber"):
-        fig.update_yaxes(autorange="reversed")
+        fig.update_yaxes(autorange="reversed", title_text='Position')
+    else:
+        fig.update_yaxes(title_text='Points')
+    utility.figDesign(fig, "Driver")
 
     return fig
 
@@ -141,13 +142,15 @@ def createSeason_GP_Plot():
     data = getSeasonGp()
     gp_count_for_year = data['year'].value_counts()
     
-    #gp_count_for_year = pd.DataFrame(gp_count_for_year)
     df_count = gp_count_for_year.reset_index()
 
     df_count.columns = ['year', 'value']
     df_count.sort_values(by="year", inplace=True)
     
-    fig = px.line(df_count, x="year", y="value", title="GP for year", height=400)
+    fig = px.line(df_count, x="year", y="value", title="GP for year", markers = True, height=400)
+    fig.update_yaxes(title_text='#GP')
+
+    utility.figDesign(fig, "Number Gran Prix for Season")
 
     return fig
 
@@ -159,7 +162,7 @@ def createSeasonGeo():
     df_count = gp_count_for_year.reset_index()
 
     df_count.columns = ['grandPrixId', 'value']
-    df = pd.DataFrame(columns=['id', 'count', 'code'])
+    df = pd.DataFrame(columns=['id', 'Num GP', 'code'])
     for index, value in df_count['grandPrixId'].items():
         
         countrieId = df2.loc[df2['id'] == value, "countryId"].iloc[0]
@@ -167,10 +170,22 @@ def createSeasonGeo():
         alpha3Code = df3.loc[df3['id'] == countrieId, "alpha3Code"]
         if not alpha3Code.empty:
             alpha3Code = alpha3Code.iloc[0]
-            df = df._append({'id': value, 'count': df_count.loc[df_count['grandPrixId'] == value, "value"].iloc[0], 'code': alpha3Code}, ignore_index=True)
+            df = df._append({'id': value, 'Num GP': df_count.loc[df_count['grandPrixId'] == value, "value"].iloc[0], 'code': alpha3Code}, ignore_index=True)
         
     
-    df['count'] = df['count'].astype(str).astype(int)
-    fig = px.scatter_geo(df, locations=df["code"], size="count", hover_data={"id" : True}, height=400)
+    df['Num GP'] = df['Num GP'].astype(str).astype(int)
+
+
+    fig = px.scatter_geo(df, locations=df["code"], size="Num GP", hover_name="id", hover_data={"Num GP" : True, "code" : False}, height=400)
+    utility.figDesign(fig, "Number GP for country")
+
+    fig.update_geos(
+        bgcolor="rgba(0,0,0,0)",
+        showland=True, 
+        landcolor="rgb(200,212,227)",
+        projection_type='orthographic',
+        showcoastlines=True,
+        resolution=110
+    ),
     
     return fig

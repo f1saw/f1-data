@@ -23,6 +23,11 @@ https://github.com/f1db/f1db
 - [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
 - [ ] commentare cosa prendono, fanno e restituiscono le funzioni
 
+### ESPLOSIONI | MAURI
+- [ ] mismatch data in teams absolute/trend
+- [ ] graphic problem in teams radio button
+- [ ] change the data view when hovering over graphs
+
 
 ==================================================================================
 
