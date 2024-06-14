@@ -185,7 +185,10 @@ def render_content(tab):
                         ]), width=6
                     ), dbc.Col(
                         dbc.Stack([ 
-                            circuits.quali_race_range,
+                            dbc.Row([
+                                html.Label("Qualifying Position Range"),
+                                circuits.quali_race_range
+                            ]),
                             dcc.Graph(id="circuits-quali-race-results")
                         ]), width=6)
                 ]),
@@ -402,8 +405,9 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     circuits_vars["quali_race_range_max"] = df["positionQualifying"].max()
     
     
+    
     # Filter by Qualifying Position Range
-    df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1]))))] 
+    df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
 
 
 
@@ -441,15 +445,29 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     
     freq_df.reset_index(inplace=True)
     freq_df.drop(columns=["index"], inplace=True)
+    
+    
+    tickvals = np.linspace(circuits_vars["quali_race_range_min"], circuits_vars["quali_race_range_max"], circuits_vars["quali_race_range_max"])
+    ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else "NQ" for val in tickvals]
+         
+         
                     
     fig = px.scatter(freq_df, 
-                x = 'positionQualifying', 
-                y = 'positionRace', 
-                size = 'count',
-                hover_data={'count': True, 'positionQualifying': True, 'positionRace': True},
-                labels={'started_in_pole': 'Started in Pole Position', 'won_race': 'Won the Race'},
-                title='Correlation between Starting in Pole Position and Winning the Race'
+        x = 'positionQualifying', 
+        y = 'positionRace', 
+        size = 'count',
+        labels = circuits.labels_dict,
+        template = drivers_template,
+        color_discrete_sequence=f1db_utils.custom_colors,
+    ).update_layout(
+        transparent_bg,
+        title = getTitleObj("Qualifying Position vs Race Position"),
+        xaxis = {
+            'tickvals': tickvals, 
+            'ticktext': ticktext  
+        }
     )
+    
     
     fig.update_traces(hovertemplate=
         'Q: <b>%{x}</b><br>R: <b>%{y}</b><br>Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +

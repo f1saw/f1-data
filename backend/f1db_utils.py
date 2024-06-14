@@ -16,6 +16,8 @@ seasons_driver_standings = "f1db-seasons-driver-standings.csv"
 seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 
 MONTH_END_SEASON = 12
+INFINITE_RESULT = 100
+MAX_QUALI = 30
 custom_colors = px.colors.qualitative.Light24.copy()
 custom_colors[0] = "rgb(247,1,0)"
 
