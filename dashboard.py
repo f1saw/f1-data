@@ -52,6 +52,27 @@ def getTitleObj(titleStr):
     }
 
 
+# Needed to handle hovertemplate properly
+def format_driver_info(driver_info):
+    max_display = 5 # TODO => make it as a const
+    if len(driver_info) > max_display:
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info[:max_display]]) + f'<br>and {len(driver_info) - max_display} more'
+    else:
+        return '<br>'.join([f"{item['driverName']}" for item in driver_info])
+    
+# drivers.drivers_dfs["worldSpread"].sort_values(by="driverName", inplace=True)
+driver_info = drivers.drivers_dfs["worldSpread"].groupby(['nationalityCountryId','year']).apply(
+    lambda x: [{'driverName': row['driverName']} for idx, row in x.iterrows()]
+).reset_index(name='driverInfo')
+
+drivers.drivers_dfs["worldSpread"] = pd.merge(drivers.drivers_dfs["worldSpread"], driver_info, on=['nationalityCountryId','year'], how="left")
+drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
+
+drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
+# print(drivers.drivers_dfs["worldSpread"][drivers.drivers_dfs["worldSpread"]["alpha3Code"] == "GBR"].tail(10))
+
+
+
 
 # DRIVERS STATIC FIGURES (TODO => maybe put them in frontend file)
 drivers_figures = {
@@ -88,9 +109,16 @@ drivers_figures = {
         labels = {
             "continentName": "Continent",
             "year": "Year",
-            "count_display": "Number of Drivers"
+            "count_display": "Number of Drivers",
+            "countryName": "Country",
+            "count": "Number of Drivers",
+            "driverInfo": "Drivers"
         },
         hover_data = {
+            'countryName': True,
+            'continentName': True,
+            'count': True,
+            'driverInfo': True,
             "alpha3Code": False,
             "year": False
         },
@@ -102,23 +130,29 @@ drivers_figures = {
         transparent_bg,
         height=500,
         title = {
-            "text": "Spread of Drivers Nationalities Over the Years",
+            "text": "Spread of Drivers' Nationalities Over the Years",
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top',
             'font': {'size': 18 }
         },
     ).update_geos(
-         bgcolor="rgba(0,0,0,0)",
+        bgcolor="rgba(0,0,0,0)",
         showland=True, 
         landcolor="rgb(200,212,227)",
         projection_type='orthographic',
         showcoastlines=True,
-        resolution=110
+        resolution=50 # Slow but otherwise (110), smaller countries (e.g. Monaco) will not be displayed
     ), 
 }
-# my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
+drivers_figures["worldSpread"].data[0].customdata = drivers.drivers_dfs["worldSpread"][["countryName", "continentName", "count"]].values.tolist()
 
+CUSTOM_HOVERTEMPLATE = '<b>%{customdata[0]}</b>, %{customdata[1]}<br><br><b>%{customdata[2]}</b><br>%{customdata[3]}'
+drivers_figures["worldSpread"].update_traces(hovertemplate=CUSTOM_HOVERTEMPLATE)
+for frame in drivers_figures["worldSpread"].frames:
+    for data in frame.data:
+        data.hovertemplate = CUSTOM_HOVERTEMPLATE
+        
 
 
 # TABS STRUCTURE
@@ -143,7 +177,7 @@ app.layout = html.Div([
     ],className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
-            value=tabs_children[0].value, 
+            value=tabs_children[2].value, 
             children=tabs_children, 
             parent_className='custom-tabs', className='pt-5 custom-tabs-container',
             colors={
@@ -242,13 +276,17 @@ def render_content(tab):
                             dbc.Row([
                                 dbc.Col(html.Label("Min Value"), width=2),
                                 dbc.Col(drivers.drivers_performance_min_value, width=7) 
-                            ]),
+                            ], id="drivers-min-value-id"),
                             dbc.Col(drivers.drivers_performance_dropdown, width=9)
                         ], width=4)
                     ]),
                     dcc.Graph(id="drivers-performance")
                 ])
             ])
+            
+            
+            
+        # TEAMS
         case 'tab-3-teams':
             return html.Div([
                 html.Hr(),
@@ -372,7 +410,7 @@ def update_option_dropdown(slider_value, radio_value):
 
 # =================2================= CIRCUITS
 circuits_vars = {
-    "gp_held_max": 0,
+    "gp_held_max": 1,
     "quali_race_range_min": -10,
     "quali_race_range": [-10,50],
     "quali_race_range_max": 50,
@@ -382,7 +420,7 @@ circuits_vars = {
     Output("circuits-gp-held-min-value-id", "marks")],
     Input("circuits-gp-held", "figure"))
 def circuits_update_slider_marks(figure):
-    return [circuits_vars["gp_held_max"], {0:"0", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
+    return [circuits_vars["gp_held_max"], {1:"1", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
 
 
 # UP-LEFT GRAPH
@@ -495,10 +533,8 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     
     # Filter by Qualifying Position Range
     df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
-
-
-
     df.sort_values(by="raceId", inplace=True, ascending=False)
+    
     total_qualifying = df['positionQualifying'].value_counts().reset_index()
     total_qualifying.columns = ['positionQualifying', 'total']
 
@@ -506,46 +542,34 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
 
 
-    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
-        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
-    ).reset_index(name='raceDriverInfo')
-    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
-
-  
-    
+    # Needed to handle hovertemplate properly
     def format_race_driver_info(race_driver_info):
-        max_display = 5
+        max_display = 5 # TODO => make it as a const
         if len(race_driver_info) > max_display:
             return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info[:max_display]]) + f'<br>and {len(race_driver_info) - max_display} more'
         else:
             return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info])
-
+        
+    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
+        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
+    ).reset_index(name='raceDriverInfo')
+    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
     freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(format_race_driver_info)
     freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
-    
-    #print(freq_df.head())
- 
-    
-    
-    
-    
     
     freq_df.reset_index(inplace=True)
     freq_df.drop(columns=["index"], inplace=True)
     
-    
     tickvals = np.linspace(circuits_vars["quali_race_range_min"], circuits_vars["quali_race_range_max"], circuits_vars["quali_race_range_max"])
     ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else "NQ" for val in tickvals]
-         
-         
-                    
+                 
     fig = px.scatter(freq_df, 
         x = 'positionQualifying', 
         y = 'positionRace', 
         size = 'count',
         labels = circuits.labels_dict,
         template = drivers_template,
-        color_discrete_sequence=f1db_utils.custom_colors,
+        color_discrete_sequence=f1db_utils.custom_colors
     ).update_layout(
         transparent_bg,
         title = getTitleObj("Qualifying Position vs Race Position"),
@@ -553,21 +577,13 @@ def circuits_update_quali_race(circuitsId, qualiRange):
             'tickvals': tickvals, 
             'ticktext': ticktext  
         }
-    )
-    
-    
-    fig.update_traces(hovertemplate=
-        'Q: <b>%{x}</b><br>R: <b>%{y}</b><br>Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
+    ).update_traces(
+        hovertemplate='Q: <b>%{x}</b><br>' + 
+        'R: <b>%{y}</b><br>' + 
+        'Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
         '%{customdata[2]}'
     )
-    
-    
-    # Aggiungere i raceId come customdata
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
-    
-    
-    
-    
     
     return fig if len(circuitsId) == 1 else warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
 
@@ -578,6 +594,32 @@ def circuits_update_quali_race(circuitsId, qualiRange):
 
 
 # =================3================= DRIVERS
+# IF "absolute" graph => HIDE drivers dropdown | SHOW min value slider
+# IF "trend"    graph => SHOW drivers dropdown | HIDE min value slider
+@app.callback(
+    [Output('drivers-performance-dropdown', 'style'),
+     Output('drivers-min-value-id', 'style')],
+    Input('drivers-performance-type-graph-id', 'value')
+)
+def toggle_dropdown(selected_value):
+    if selected_value == "absolute":
+        return [{'display': 'none'},None]
+    else:
+        return [None,{'display': 'none'}]
+    
+    
+# Update Drivers Dropdown
+@app.callback(
+    Output("drivers-performance-dropdown", "options"),
+    Input("radio-drivers-performance-type-id", "value"),
+)
+def update_drivers_dropdown(performance_type):    
+    return [
+        {"label":row["driverName"], "value": row["driverId"]} for row in drivers.getDrivers(performance_type).to_dict(orient="records")
+    ]
+
+
+# BOTTOM GRAPH
 @app.callback(
     [Output("drivers-performance", "figure"),
      Output("drivers-performance-min-value-id", "max"),
@@ -599,21 +641,21 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             df = drivers.getAbsolutePerformance(
                 performance_type, 
                 min_value, 
-                "count_podiums" if performance_type == "podiums" else "count_position_1"
+                "count_podiums" if performance_type == f1db_utils.PerformanceType.PODIUMS.value else "count_position_1"
             )
             
         title = f"Most F1 {drivers.drivers_dict[performance_type]}"
         match performance_type:
-            case "wdcs" | "wins" | "poles":
+            case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value:
                 # Keep only 1st place results, already done with poles
-                if performance_type != "poles":
+                if performance_type != f1db_utils.PerformanceType.POLES.value:
                     df = df[df["count_position_1"] != 0] 
                 df.sort_values(by=["count_position_1"], ascending=False, inplace=True)         
                 y = "count_position_1"
                 drivers.drivers_dict["count_position_1"] = f"Number of {drivers.drivers_dict[performance_type]}"
                 max_val = df[y].max()
                 
-            case "podiums":
+            case f1db_utils.PerformanceType.PODIUMS.value:
                 df.sort_values(by=["count_podiums"], ascending=False, inplace=True)
                 y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
                 drivers.drivers_dict["count_position_1"] = "1°"
@@ -659,7 +701,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                     # customdata = ["1°", "2°", "3°"],
                     hovertemplate="<b>%{y}<br>" + # TODO => try to do like 1°:#1, 2°:#2, ...
                             "<extra></extra>"
-                ), max_val, {0: "0", str(max_val): str(max_val)}]
+                ), max_val, {1: "1", str(max_val): str(max_val)}]
             else:
                 return [fig.update_traces(
                     hoverlabel=dict(
@@ -671,9 +713,9 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                             "<extra></extra>",
                     showlegend=True,
                     name= "1°"
-                ), max_val, {0: "0", str(max_val): str(max_val)}]
+                ), max_val, {1: "1", str(max_val): str(max_val)}]
         else:
-            return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+            return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
 
     elif selected_driver is not None: # Performance Trend
@@ -683,7 +725,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
         hover_data = {
             drivers.performanceType2TimeAxis[performance_type]: False
         }
-        if performance_type != "wdcs":
+        if performance_type != f1db_utils.PerformanceType.WDCS.value:
             hover_data["officialName"] = True
         
         return [px.line(
@@ -701,10 +743,10 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
             title = getTitleObj(f"{drivers.drivers_dict[performance_type]} Trend"),
             hovermode = "x"
-        ) if not df.empty else warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+        ) if not df.empty else warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
     else:
-        return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
+        return [warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
     
 # =================3================= 
 

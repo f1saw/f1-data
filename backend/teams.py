@@ -321,7 +321,8 @@ def createConstructorTrend(graph_info, teamName):
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
-            print(df2)
+
+            #print(df2)
             fig = px.line(df2, 
                           x='date', 
                           y='RowNumber', 
@@ -336,6 +337,7 @@ def createConstructorTrend(graph_info, teamName):
                     "Total Podiums: %{y}",
                 ])
              )
+
     
    
     utility.figDesign(fig, f'{teamName} Trend')

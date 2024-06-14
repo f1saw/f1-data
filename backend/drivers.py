@@ -10,7 +10,7 @@ import backend.f1db_utils as f1db_utils
 
 MIN_VALUE_DEFAULT = 0
 COL_TO_APPLY_MIN_DEFAULT = "count_position_1"
-PERFORMANCE_TYPE_DEFAULT = "wdcs"
+PERFORMANCE_TYPE_DEFAULT = f1db_utils.PerformanceType.WDCS.value
 MONTH_END_SEASON = 12
 
 # TODO => wins, podiums, poles as ENUM
@@ -35,10 +35,10 @@ drivers_dict = {
 }
 
 performanceType2file = {
-    "wdcs": f1db_utils.seasons_driver_standings,
-    "wins": f1db_utils.races_results,
-    "podiums": f1db_utils.races_results,
-    "poles": f1db_utils.qualifying_results
+    f1db_utils.PerformanceType.WDCS.value: f1db_utils.seasons_driver_standings,
+    f1db_utils.PerformanceType.WINS.value: f1db_utils.races_results,
+    f1db_utils.PerformanceType.PODIUMS.value: f1db_utils.races_results,
+    f1db_utils.PerformanceType.POLES.value: f1db_utils.qualifying_results
 }
 
 performanceType2TimeAxis = {
@@ -50,7 +50,7 @@ performanceType2TimeAxis = {
 
 
 def currentSeasonCheckMask(df, performanceType):
-    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == "wdcs" else True
+    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == f1db_utils.PerformanceType.WDCS.value else True
 
 # FUNCTIONS
 def get_p1_mask(df, performanceType):
@@ -65,16 +65,22 @@ def get_p1_mask(df, performanceType):
     
 def performanceType2Mask(df, performanceType):
     match performanceType:
-        case "wins" | "wdcs" | "poles": 
+        case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value: 
             return get_p1_mask(df, performanceType)
-        case "podiums":
+        case f1db_utils.PerformanceType.PODIUMS.value:
             return (df["positionNumber"] <= 3.0) 
 
 
-def getDrivers():
+def getDrivers(filterFlag = None):
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True) # TODO => al più nazionalità
+    
+    if filterFlag is not None: # e.g. WDCs => return only drivers who have won at least one WDCs
+        df = getTrendPerformance(df["driverId"].to_numpy(), filterFlag)
+        df = df.drop_duplicates(subset=['driverId', 'driverName'])
+        df = df.sort_values(by="driverName")
+    
     # print(df.head())
     return df
     
@@ -111,12 +117,12 @@ def getWorldSpread():
     #print(df_drivers_entrants.tail())
     
     
-    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","countryOfBirthCountryId"]), inplace=True)
-    df_drivers_info.rename(columns={"id":"driverId"}, inplace=True)
+    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","name","nationalityCountryId"]), inplace=True)
+    df_drivers_info.rename(columns={"id":"driverId", "name": "driverName"}, inplace=True)
     #print(df_drivers_info.tail())
     
     df_countries.drop(columns=df_countries.columns.difference(["id", "alpha3Code", "name", "continentId"]), inplace=True)
-    df_countries.rename(columns={"id":"countryOfBirthCountryId", "name":"countryName"}, inplace=True)
+    df_countries.rename(columns={"id":"nationalityCountryId", "name":"countryName"}, inplace=True)
     # print(df_countries.tail())
     
     df_continents.drop(columns=df_continents.columns.difference(["id", "name"]), inplace=True)
@@ -124,11 +130,13 @@ def getWorldSpread():
     # print(df_continents.tail())
     
     df_merged = pd.merge(df_drivers_entrants, df_drivers_info, on="driverId", how="left")
-    df_merged = pd.merge(df_merged, df_countries, on="countryOfBirthCountryId", how="left")
+    df_merged = pd.merge(df_merged, df_countries, on="nationalityCountryId", how="left")
     df_merged = pd.merge(df_merged, df_continents, on="continentId", how="left")
+    df_merged = df_merged.drop_duplicates(subset=['driverId', 'year'])
     df_merged["count"] = df_merged.groupby(["year","alpha3Code"])["driverId"].transform("count")
     df_merged["count_display"] = df_merged["count"]
-    df_merged.drop(columns=["driverId"], inplace=True)
+    
+    
     
 
     # print(df_merged.tail())
@@ -147,7 +155,7 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     
     #print(performanceType.upper())
     match performanceType:
-        case "wins" | "podiums":
+        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value:
             podium_mask = (df["positionNumber"] == 1) | (df["positionNumber"] == 2) | (df["positionNumber"] == 3)
             df = df[podium_mask]
             for place in [1,2,3]:
@@ -156,7 +164,7 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
             df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
             df.drop_duplicates(subset=["driverId","count_position_1","count_position_2","count_position_2"], inplace=True)
         
-        case "wdcs" | "poles":
+        case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.POLES.value:
             df = df[get_p1_mask(df, performanceType)]
             for place in [1]:
                 df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum())
@@ -214,10 +222,10 @@ def getTrendPerformance(selected_drivers, performanceType):
     #df = df[get_p1_mask(df, performanceType)]
     df.reset_index(inplace=True)
     match performanceType:
-        case "wdcs":
+        case f1db_utils.PerformanceType.WDCS.value:
             df.drop(columns=["index","positionDisplayOrder","positionText","points"], inplace=True)
         
-        case "wins" | "podiums" | "poles":
+        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value | f1db_utils.PerformanceType.POLES.value:
             df.drop(columns=df.columns.difference(["raceId","driverId","positionNumber"]), inplace=True)
             df_races = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.races}")
             df_races.rename(columns={"id":"raceId"}, inplace=True)
@@ -229,7 +237,7 @@ def getTrendPerformance(selected_drivers, performanceType):
          
     for driver_id in selected_drivers:
         counter[driver_id] = 0
-    df["progressiveCounter"] = df.apply(count_p1 if performanceType != "podiums" else count_podiums, axis=1)
+    df["progressiveCounter"] = df.apply(count_p1 if performanceType != f1db_utils.PerformanceType.PODIUMS.value else count_podiums, axis=1)
     
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
     # print(df.head())
@@ -240,6 +248,7 @@ def getTrendPerformance(selected_drivers, performanceType):
 
 
 # UI
+
 drivers_performance_type_graph_radio = dbc.RadioItems(
     id="drivers-performance-type-graph-id",
     options=[
@@ -253,18 +262,18 @@ drivers_performance_type_graph_radio = dbc.RadioItems(
 drivers_performance_type_radio = dbc.RadioItems(
     id="radio-drivers-performance-type-id",
     options=[
-        {"label": "WDCs", "value": "wdcs"},
-        {"label": "Wins", "value": "wins"},
-        {"label": "Podiums", "value": "podiums"},
-        {"label": "Poles", "value": "poles"}
+        {"label": "WDCs", "value": f1db_utils.PerformanceType.WDCS.value},
+        {"label": "Wins", "value": f1db_utils.PerformanceType.WINS.value},
+        {"label": "Podiums", "value": f1db_utils.PerformanceType.PODIUMS.value},
+        {"label": "Poles", "value": f1db_utils.PerformanceType.POLES.value}
     ],
-    value="wdcs",
+    value=f1db_utils.PerformanceType.WDCS.value,
     inline=True
 )
 
 drivers_performance_min_value = dcc.Slider(
     id='drivers-performance-min-value-id',
-    min=0,
+    min=1,
     # max=100,  # Un valore molto grande per simulare l'infinito
     step=1,
     value=0,
@@ -274,7 +283,7 @@ drivers_performance_min_value = dcc.Slider(
 
 drivers_performance_dropdown = dcc.Dropdown(
     id="drivers-performance-dropdown",
-    options=[{"label":row["driverName"], "value": row["driverId"]} for row in getDrivers().to_dict(orient="records")],
+    options=[{"label":row["driverName"], "value": row["driverId"]} for row in getDrivers(PERFORMANCE_TYPE_DEFAULT).to_dict(orient="records")],
     placeholder="Select a Driver",
     searchable=True,
     clearable=False,

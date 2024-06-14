@@ -3,9 +3,9 @@ https://github.com/f1db/f1db
 
 
 ### TODO | MATTE
-- [ ] DRIVERS | UI  | drivers / trend => visualizzare nel dropdown solo piloti che hanno vinto mondiali o che hanno dati
+- [X] DRIVERS | UI  | drivers / trend => visualizzare nel dropdown solo piloti che hanno vinto mondiali o che hanno dati
 - [ ] DRIVERS | UI  | show total podiums count in absolute graph
-- [ ] DRIVERS | UI  | absolute => show only min value ; trend => show only select driver
+- [X] DRIVERS | UI  | absolute => show only min value ; trend => show only select driver
 - [ ] DRIVERS | UI  | elencare nome piloti come teams (da mettere anche in seasons)
 
 - [ ]         | FIX | Empty dataset warning
