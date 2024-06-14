@@ -2,34 +2,16 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
+import numpy as np
 
 import backend.season as season
 import backend.drivers as drivers
+import backend.circuits as circuits
+import backend.f1db_utils as f1db_utils
 import backend.teams as teams
 
-
-
-# chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
+# TODO chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
 # leggere da ./f1db-csv/
-
-# SEASON DATA
-"""
-df_season_list = season.getSeasonData()
-
-df_season_list["df_season_costurct"] = df_season_list[0]
-df_season_list["df_season_driver"] = df_season_list[1]
-df_season_list["df_season_entrants_constructors"] = df_season_list[2]
-df_season_list["df_season_entrants_drivers"] = df_season_list[3]
-df_season_list["df_season_entrants_tyre"] = df_season_list[4]
-df_season_list["sdf_season_entrants"] = df_season_list[5]
-"""
-
-#### DATI OTTENUTI
-
-
-#### CREAZIONE DASHBOARD
-
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -71,7 +53,7 @@ def getTitleObj(titleStr):
 
 
 
-# STATIC FIGURES
+# DRIVERS STATIC FIGURES (TODO => maybe put them in frontend file)
 drivers_figures = {
     "numDriversPerYear" : px.line(
         drivers.drivers_dfs["numDriversPerYear"],
@@ -156,7 +138,7 @@ app.layout = html.Div([
     html.H1('F1-DATA', className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
-            value=tabs_children[0].value, 
+            value=tabs_children[1].value, 
             children=tabs_children, 
             parent_className='custom-tabs', className='pt-5 custom-tabs-container',
             colors={
@@ -201,18 +183,35 @@ def render_content(tab):
         # CIRCUITS
         case 'tab-1-circuits':
             return html.Div([
-                html.H3('Tab content 2'),
-                dcc.Graph(
-                    id='graph-2-tabs-dcc',
-                    figure={
-                        'data': [{
-                            'x': [1, 2, 3],
-                            'y': [5, 10, 6],
-                            'type': 'bar'
-                        }]
-                    }
-                )
+                dbc.Row([
+                    dbc.Col(
+                        dbc.Stack([
+                            dbc.Row([
+                                dbc.Col(html.Label("Min Value"), width=2),
+                                dbc.Col(circuits.circuits_gp_held_min_value, width=7) 
+                            ], className="d-flex justify-content-center"),
+                            dcc.Graph(id="circuits-gp-held")
+                        ]), width=6
+                    ), dbc.Col(
+                        dbc.Stack([ 
+                            dbc.Row([
+                                html.Label("Qualifying Position Range"),
+                                circuits.quali_race_range
+                            ]),
+                            dcc.Graph(id="circuits-quali-race-results")
+                        ]), width=6)
+                ]),
+                html.Br(),
+                dbc.Stack([
+                    dbc.Row([dbc.Col(circuits.circuits_dropdown, width=3)], className="d-flex justify-content-center"),
+                    dcc.Graph(id='circuits-qualifying', figure=drivers_figures['numDriversPerYear'])
+                ])
             ])
+            
+            
+            
+            
+            
             
         # DRIVERS
         case 'tab-2-drivers':
@@ -293,8 +292,16 @@ def render_content(tab):
         case _:
              return html.Div([])
         
-#Callback season
-         
+
+
+
+
+
+
+
+
+
+# =================1================= SEASONS
 @callback(Output('dropdown_drivers', 'options'),
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
@@ -356,12 +363,221 @@ def update_teams_slider(radio_input):
 def update_option_dropdown(slider_value, radio_value):
     return teams.createDropdown(slider_value, radio_value)
 
+# =================1================= 
 
 
 
 
 
 
+# =================2================= CIRCUITS
+circuits_vars = {
+    "gp_held_max": 0,
+    "quali_race_range_min": -10,
+    "quali_race_range": [-10,50],
+    "quali_race_range_max": 50,
+}
+@app.callback(
+    [Output("circuits-gp-held-min-value-id", "max"),
+    Output("circuits-gp-held-min-value-id", "marks")],
+    Input("circuits-gp-held", "figure"))
+def circuits_update_slider_marks(figure):
+    return [circuits_vars["gp_held_max"], {0:"0", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
+
+
+# UP-LEFT GRAPH
+@app.callback(
+    Output("circuits-gp-held", "figure"),
+    Input("circuits-gp-held-min-value-id", "value")
+)
+def circuits_update_gp_held(min_value):
+    global circuits_vars
+    df = circuits.get_gp_held(min_value)
+    circuits_vars["gp_held_max"] = df["totalRacesHeld"].max()
+    fig = px.bar(
+        df,
+        x = "name",
+        y = "totalRacesHeld",
+        labels = circuits.labels_dict,
+        hover_data = {
+            "name": False,
+            "fullName": False,
+            "type": True,
+            "countryName": True
+        },
+        template = drivers_template,
+        color_discrete_sequence =[f1db_utils.podium_colors["count_position_2"]]
+    ).update_layout(
+        transparent_bg,
+        title = getTitleObj("Number GP Helds by Circuits"),
+        hovermode = "x"
+    ) if not df.empty else warning_empty_dataframe
+    
+    
+    return fig
+
+
+
+
+# BOTTOM GRAPH
+@app.callback(
+    Output("circuits-qualifying", "figure"),
+     Input("circuits-dropdown", "value")
+)
+def circuits_update_qualifying(circuitsIds):
+    if not circuitsIds: 
+        return warning_empty_dataframe
+    
+    df = circuits.get_qualifying_times(circuitsIds)
+
+    # Generare i tickvals automaticamente
+    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=7, base=10)
+    ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
+    
+    return px.line(
+        df,
+        x = "year",
+        y = "timeMillis", # pole,
+        color = "circuitName",
+        markers = True,
+        labels = circuits.labels_dict,
+        hover_data = {
+            "year": False,
+            "timeMillis": False,
+            "time": True,
+            #"officialName": True,
+            "qualifyingFormat": True,
+            "driverName": True
+        },
+        color_discrete_sequence=f1db_utils.custom_colors,
+        template = drivers_template,
+        # TODO per provare a evitare che i colori dei circuiti cambino quando se ne selezionano altri category_orders=
+    ).update_layout(
+        transparent_bg,
+        title = getTitleObj("Pole Lap Time Over the Years"),
+        hovermode = "x",
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext,
+            tickmode='array',
+            title="Lap Time"
+        )
+    ) if not df.empty else warning_empty_dataframe
+    #.for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name])
+
+
+# UP-RIGHT GRAPH
+@app.callback(
+    [Output("circuits-quali-race-range-id", "min"),
+    Output("circuits-quali-race-range-id", "max")],
+    Input("circuits-quali-race-results", "figure")
+)
+def circuits_update_quali_race(figure):
+    return [
+        circuits_vars["quali_race_range_min"],
+        circuits_vars["quali_race_range_max"]
+    ]
+    
+@app.callback(
+    Output("circuits-quali-race-results", "figure"),
+    [Input("circuits-dropdown", "value"),
+     Input("circuits-quali-race-range-id", "value")]
+)
+def circuits_update_quali_race(circuitsId, qualiRange):
+    if len(circuitsId) == 0: return f1db_utils.warning_empty_dataframe
+    # partendo dalle prime 2 file (quattro posizioni o tre) => dove vai a finire
+    global circuits_vars
+    df = circuits.get_quali_race(circuitsId)
+    circuits_vars["quali_race_range_min"] = df["positionQualifying"].min()
+    circuits_vars["quali_race_range_max"] = df["positionQualifying"].max()
+    
+    
+    
+    # Filter by Qualifying Position Range
+    df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
+
+
+
+    df.sort_values(by="raceId", inplace=True, ascending=False)
+    total_qualifying = df['positionQualifying'].value_counts().reset_index()
+    total_qualifying.columns = ['positionQualifying', 'total']
+
+    freq_df = df.groupby(['positionQualifying', 'positionRace']).size().reset_index(name='count')
+    freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
+
+
+    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
+        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
+    ).reset_index(name='raceDriverInfo')
+    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
+
+  
+    
+    def format_race_driver_info(race_driver_info):
+        max_display = 5
+        if len(race_driver_info) > max_display:
+            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info[:max_display]]) + f'<br>and {len(race_driver_info) - max_display} more'
+        else:
+            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info])
+
+    freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(format_race_driver_info)
+    freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
+    
+    #print(freq_df.head())
+ 
+    
+    
+    
+    
+    
+    freq_df.reset_index(inplace=True)
+    freq_df.drop(columns=["index"], inplace=True)
+    
+    
+    tickvals = np.linspace(circuits_vars["quali_race_range_min"], circuits_vars["quali_race_range_max"], circuits_vars["quali_race_range_max"])
+    ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else "NQ" for val in tickvals]
+         
+         
+                    
+    fig = px.scatter(freq_df, 
+        x = 'positionQualifying', 
+        y = 'positionRace', 
+        size = 'count',
+        labels = circuits.labels_dict,
+        template = drivers_template,
+        color_discrete_sequence=f1db_utils.custom_colors,
+    ).update_layout(
+        transparent_bg,
+        title = getTitleObj("Qualifying Position vs Race Position"),
+        xaxis = {
+            'tickvals': tickvals, 
+            'ticktext': ticktext  
+        }
+    )
+    
+    
+    fig.update_traces(hovertemplate=
+        'Q: <b>%{x}</b><br>R: <b>%{y}</b><br>Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
+        '%{customdata[2]}'
+    )
+    
+    
+    # Aggiungere i raceId come customdata
+    fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
+    
+    
+    
+    
+    
+    return fig if len(circuitsId) == 1 else warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
+
+# =================2=================
+
+
+
+
+
+# =================3================= DRIVERS
 @app.callback(
     [Output("drivers-performance", "figure"),
      Output("drivers-performance-min-value-id", "max"),
@@ -405,11 +621,6 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
         
         
         x = "driverName"
-        colors = {
-            "count_position_1": "gold",
-            "count_position_2": "silver",
-            "count_position_3": "peru"
-        }
         # print(f"{min_value} {max_val}")
         if min_value <= max_val:
             fig = px.bar(df, 
@@ -421,8 +632,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                     x: False
                 },
                 template = drivers_template,
-                color_discrete_sequence =[colors["count_position_1"]]*len(df),
-                color_discrete_map=colors,
+                color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
+                color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
             ).update_layout(
                 transparent_bg,
@@ -494,6 +705,13 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
     else:
         return [warning_empty_dataframe, max_val, {0: "0", str(max_val): str(max_val)}]
     
+# =================3================= 
+
+
+
+
+
+
       
 if __name__ == '__main__':
     app.run(debug=True) # TODO => what does Debug=True do ??

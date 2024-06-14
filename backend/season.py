@@ -77,19 +77,21 @@ def createRangeSlider():
 
 def createDropDownDrivers(slider_value=[1990, 1995]):
     data = getSeasonDrivingStanding()
+
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
     return dcc.Dropdown(
-    id='dropdown_drivers',
-    options = [{'label': value, 'value': value} for value in data_in_range ],
-    value=['ayrton-senna', 'alain-prost'],
-    multi=True,
-    style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
+        id='dropdown_drivers',
+        options = [{'label': value, 'value': value} for value in data_in_range ],
+        value=['ayrton-senna', 'alain-prost'],
+        multi=True,
+        style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'}
     )
 
 def updateDropDownDrivers(slider_value):
     data = getSeasonDrivingStanding()
+
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
