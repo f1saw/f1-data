@@ -217,7 +217,7 @@ quali_race_range = dcc.RangeSlider(
 
 circuits_dropdown = dcc.Dropdown(
     id="circuits-dropdown",
-    options=[{"label": f"{row["circuitName"]}, {row["countryName"]}", "value": row["circuitId"]} for row in getCircuits().to_dict(orient="records")], # TODO => put also flag image => FLAG Name, country
+    options=[{"label": f'{row["circuitName"]}, {row["countryName"]}', "value": row["circuitId"]} for row in getCircuits().to_dict(orient="records")],
     placeholder="Select a Circuit",
     searchable=True,
     clearable=False,
