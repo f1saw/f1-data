@@ -264,7 +264,7 @@ def render_content(tab):
                 dbc.Row([
                     dbc.Col(
                     dbc.Stack([
-                                html.Label("Performance Type"),
+                                html.Label("Type of Graph"),
                                 teams.createRadioButtonGraph()
                             ], direction="horizontal", gap=3),
                     width=3),
@@ -291,19 +291,12 @@ def render_content(tab):
                         dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
                     )
                 )
-            ])
+            ], className="container-fluid")
         
         # DEFAULTS
         case _:
              return html.Div([])
         
-
-
-
-
-
-
-
 
 
 # =================1================= SEASONS
