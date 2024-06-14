@@ -60,6 +60,7 @@ drivers_figures = {
         x = "year",
         y = ["officialDriver","testDriver"],
         markers = True,
+        color_discrete_sequence=f1db_utils.custom_colors,
         labels = {
             "value": "Number of Drivers",
             "variable": "Driver Type",
@@ -135,7 +136,11 @@ for idx, tab in enumerate(tabs):
 # LAYOUT BUILDER
 
 app.layout = html.Div([
-    html.H1('F1-DATA', className="text-center fw-bold m-3"),
+    html.H1([
+        html.Span('F', style={'color': 'red'}),
+        html.Span('1-DATA', style={'color': 'white'}),
+        #html.Span('A', style={'color': 'red'}),
+    ],className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
             value=tabs_children[0].value, 
@@ -259,7 +264,7 @@ def render_content(tab):
                 dbc.Row([
                     dbc.Col(
                     dbc.Stack([
-                                html.Label("Performance Type"),
+                                html.Label("Type of Graph"),
                                 teams.createRadioButtonGraph()
                             ], direction="horizontal", gap=3),
                     width=3),
@@ -286,7 +291,7 @@ def render_content(tab):
                         dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
                     )
                 )
-            ])
+            ], className="container-fluid")
         
         # DEFAULTS
         case _:
@@ -294,18 +299,13 @@ def render_content(tab):
         
 
 
-
-
-
-
-
-
-
 # =================1================= SEASONS
 @callback(Output('dropdown_drivers', 'options'),
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
         return season.updateDropDownDrivers(slider_value)
+
+
 
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
@@ -315,7 +315,7 @@ def update_dropdown(slider_value):
 def update_graph(radio_value, range_value, driver, option):
     print(option[0]['value'])
     if(driver == []):
-        driver = option[0]['value']
+        driver = [option[0]['value'], option[3]['value']]
     return season.createSeasonDriverPlot(radio_value, range_value, driver) 
  
 #### 
@@ -344,17 +344,17 @@ def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_va
 @app.callback(
     [Output('teams-slider', 'max'),
      Output('teams-slider', 'min'),
-     Output('teams-slider', 'marks')],
+     Output('teams-slider', 'marks'),
+     Output('teams-slider', 'value')],
         Input('radio-input-teams', 'value'))
 def update_teams_slider(radio_input):
+    value = teams.updateSliderValue()
     if (radio_input == "win"):
-        return 16, 1, {i: str(i) for i in range(1, 16+1)}
-    #elif(radio_input == "best race"):
-     #   return 32, 1, {i: str(i) for i in range(1, 32+1)}
+        return value['win_max_slider'], 1, {0:"1", str(value['win_max_slider']):str(value['win_max_slider'])}, 1
     elif(radio_input == "win race"):
-        return 20, 1, {i: str(i) for i in range(1, 20+1)}
+        return value['win_race_max_slider'], 1, {0:"1", str(value['win_race_max_slider']):str(value['win_race_max_slider'])}, 1
     else:
-        return 37, 1, {i: str(i) for i in range(1, 37+1)}
+        return value['podiums_max_slider'], 1, {0:"1", str(value['podiums_max_slider']):str(value['podiums_max_slider'])}, 1
 
 
 @callback(Output('dropdown_col', 'children'),
@@ -694,6 +694,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             markers = True,
             labels = drivers.drivers_dict,
             hover_data = hover_data,
+            color_discrete_sequence=f1db_utils.custom_colors,
             template = drivers_template
         ).update_layout(
             transparent_bg,
