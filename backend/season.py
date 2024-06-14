@@ -135,15 +135,21 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
                   color_discrete_sequence=f1db_utils.custom_colors,
                   height=400)
     fig.update_xaxes(dtick=1, tickmode='linear')
-    fig.update_traces(
-        hovertemplate="<br>".join([
-            "Year: %{x}",
-            "Position: %{y}",
-        ])
-    )
     if (radio_button_value == "positionNumber"):
+        fig.update_traces(
+            hovertemplate="<br>".join([
+                "Year: %{x}",
+                "Position: %{y}",
+            ])
+        )
         fig.update_yaxes(autorange="reversed", title_text='Position')
     else:
+        fig.update_traces(
+            hovertemplate="<br>".join([
+                "Year: %{x}",
+                "Points: %{y}",
+            ])
+        )
         fig.update_yaxes(title_text='Points')
     utility.figDesign(fig, "Driver's position in the drivers' championship")
 

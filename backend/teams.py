@@ -130,6 +130,14 @@ def createWinConstructorPlot(min_value = 0):
                 color_discrete_map=utility.colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
     utility.figDesign(fig, "Total Championship Wins")
+    fig.update_yaxes(title_text='Total Championship Wins')
+    fig.update_xaxes(title_text='Team Name')
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "Team Name: %{x}",
+            "Total Championship Wins: %{y}",
+        ])
+    )
     return fig
 
 def createRaceConstructPlot(min_value = 0):
@@ -156,6 +164,14 @@ def createRaceWinPlot(min_value = 0):
                 color_discrete_map=utility.colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
     utility.figDesign(fig, "Total Race Win")
+    fig.update_yaxes(title_text='Total Race Win')
+    fig.update_xaxes(title_text='Team Name')
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "Team Name: %{x}",
+            "Total Race Win: %{y}",
+        ])
+    )
     return fig
 
 def createTotalPodiumPlot(min_value = 1):
@@ -170,6 +186,14 @@ def createTotalPodiumPlot(min_value = 1):
                 color_discrete_map=utility.colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
     utility.figDesign(fig, "Total podiums for costructor")
+    fig.update_yaxes(title_text='Total podiums')
+    fig.update_xaxes(title_text='Team Name')
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "Team Name: %{x}",
+            "Total podiums: %{y}",
+        ])
+    )
     return fig
     
 
@@ -187,6 +211,13 @@ def creteNumTeamsEntrantsForYear():
                   color_discrete_sequence=f1db_utils.custom_colors,
                   height=400)
     fig.update_yaxes(title_text='#Constructor')
+    fig.update_xaxes(title_text='Team Name')
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "Year: %{x}",
+            "Num of Teams: %{y}",
+        ])
+    )
 
     utility.figDesign(fig, "Total teams for year")
 
@@ -239,8 +270,20 @@ def createConstructorTrend(graph_info, teamName):
             df2 = df2[df2['constructorId'].isin(df['id'])]
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
-            fig = px.line(df2, x='year', y='RowNumber', color='constructorId', markers=True)
+            fig = px.line(df2, 
+                          x='year', 
+                          y='RowNumber', 
+                          color='constructorId', 
+                          color_discrete_sequence=f1db_utils.custom_colors, 
+                          markers=True)
             fig.update_yaxes(title_text='# Championship Win')
+            fig.update_xaxes(title_text='Year')
+            fig.update_traces(
+                 hovertemplate="<br>".join([
+                    "Date: %{x}",
+                    "Total Championship Win: %{y}",
+                ])
+             )
 
         case 'win race':
             [df2, df3] = getRaceTeamsData()
@@ -249,8 +292,20 @@ def createConstructorTrend(graph_info, teamName):
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
-            fig = px.line(df2, x='date', y='RowNumber', color='constructorId', markers=True)
+            fig = px.line(df2, 
+                          x='date', 
+                          y='RowNumber', 
+                          color='constructorId', 
+                          color_discrete_sequence=f1db_utils.custom_colors,
+                          markers=True)
             fig.update_yaxes(title_text='# Race Win')
+            fig.update_xaxes(title_text='Year')
+            fig.update_traces(
+                 hovertemplate="<br>".join([
+                    "Date: %{x}",
+                    "Total Race Win: %{y}",
+                ])
+             )
         
         case 'podiums':
             [df2, df3] = getRaceTeamsData()
@@ -260,8 +315,20 @@ def createConstructorTrend(graph_info, teamName):
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
             print(df2)
-            fig = px.line(df2, x='date', y='RowNumber', color='constructorId', markers=True)
-            fig.update_yaxes(title_text='# Race Win')
+            fig = px.line(df2, 
+                          x='date', 
+                          y='RowNumber', 
+                          color='constructorId', 
+                          color_discrete_sequence=f1db_utils.custom_colors,
+                          markers=True)
+            fig.update_yaxes(title_text='# Podiums')
+            fig.update_xaxes(title_text='Year')
+            fig.update_traces(
+                 hovertemplate="<br>".join([
+                    "Date: %{x}",
+                    "Total Podiums: %{y}",
+                ])
+             )
     
    
     utility.figDesign(fig, f'{teamName} Trend')

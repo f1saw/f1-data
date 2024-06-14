@@ -136,7 +136,11 @@ for idx, tab in enumerate(tabs):
 # LAYOUT BUILDER
 
 app.layout = html.Div([
-    html.H1('F1-DATA', className="text-center fw-bold m-3"),
+    html.H1([
+        html.Span('F', style={'color': 'red'}),
+        html.Span('1-DATA', style={'color': 'white'}),
+        #html.Span('A', style={'color': 'red'}),
+    ],className="text-center fw-bold m-3"),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
             value=tabs_children[0].value, 
