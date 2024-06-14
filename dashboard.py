@@ -69,8 +69,7 @@ drivers.drivers_dfs["worldSpread"] = pd.merge(drivers.drivers_dfs["worldSpread"]
 drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
 
 drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
-# print(drivers.drivers_dfs["worldSpread"].head(10))
-print(drivers.drivers_dfs["worldSpread"][drivers.drivers_dfs["worldSpread"]["nationalityCountryId"] == "monaco"])
+# print(drivers.drivers_dfs["worldSpread"][drivers.drivers_dfs["worldSpread"]["alpha3Code"] == "GBR"].tail(10))
 
 
 
@@ -136,22 +135,23 @@ drivers_figures = {
             'yanchor': 'top',
             'font': {'size': 18 }
         },
-    ).update_traces(
-        hovertemplate='<b>%{customdata[0]}</b>, %{customdata[1]}<br><br>' + # countryName, continentName
-            '<b>%{customdata[2]}</b><br>' + # count
-            '%{customdata[3]}' # driversName
     ).update_geos(
         bgcolor="rgba(0,0,0,0)",
         showland=True, 
         landcolor="rgb(200,212,227)",
         projection_type='orthographic',
         showcoastlines=True,
-        resolution=50
+        resolution=50 # Slow but otherwise (110), smaller countries (e.g. Monaco) will not be displayed
     ), 
 }
-
 drivers_figures["worldSpread"].data[0].customdata = drivers.drivers_dfs["worldSpread"][["countryName", "continentName", "count"]].values.tolist()
-# my_fig.add_scatter(x=drivers_dfs["numDriversPerYear"]["year"], y=drivers_dfs["numDriversPerYear"]["testDriver"])
+
+CUSTOM_HOVERTEMPLATE = '<b>%{customdata[0]}</b>, %{customdata[1]}<br><br><b>%{customdata[2]}</b><br>%{customdata[3]}'
+drivers_figures["worldSpread"].update_traces(hovertemplate=CUSTOM_HOVERTEMPLATE)
+for frame in drivers_figures["worldSpread"].frames:
+    for data in frame.data:
+        data.hovertemplate = CUSTOM_HOVERTEMPLATE
+        
 
 
 # TABS STRUCTURE

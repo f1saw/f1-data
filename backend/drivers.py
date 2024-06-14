@@ -132,6 +132,7 @@ def getWorldSpread():
     df_merged = pd.merge(df_drivers_entrants, df_drivers_info, on="driverId", how="left")
     df_merged = pd.merge(df_merged, df_countries, on="nationalityCountryId", how="left")
     df_merged = pd.merge(df_merged, df_continents, on="continentId", how="left")
+    df_merged = df_merged.drop_duplicates(subset=['driverId', 'year'])
     df_merged["count"] = df_merged.groupby(["year","alpha3Code"])["driverId"].transform("count")
     df_merged["count_display"] = df_merged["count"]
     
