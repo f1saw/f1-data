@@ -60,6 +60,7 @@ drivers_figures = {
         x = "year",
         y = ["officialDriver","testDriver"],
         markers = True,
+        color_discrete_sequence=f1db_utils.custom_colors,
         labels = {
             "value": "Number of Drivers",
             "variable": "Driver Type",
@@ -307,6 +308,8 @@ def render_content(tab):
 def update_dropdown(slider_value):
         return season.updateDropDownDrivers(slider_value)
 
+
+
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
                Input('range-slider', 'value'),
@@ -315,7 +318,7 @@ def update_dropdown(slider_value):
 def update_graph(radio_value, range_value, driver, option):
     print(option[0]['value'])
     if(driver == []):
-        driver = option[0]['value']
+        driver = [option[0]['value'], option[3]['value']]
     return season.createSeasonDriverPlot(radio_value, range_value, driver) 
  
 #### 
@@ -694,6 +697,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             markers = True,
             labels = drivers.drivers_dict,
             hover_data = hover_data,
+            color_discrete_sequence=f1db_utils.custom_colors,
             template = drivers_template
         ).update_layout(
             transparent_bg,

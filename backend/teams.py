@@ -7,6 +7,7 @@ import dash_bootstrap_components as dbc
 import os
 from datetime import datetime
 import utility.utility as utility
+import backend.f1db_utils as f1db_utils
 
 def getTeamsData():
     current_path = os.path.abspath(__file__)
@@ -178,7 +179,13 @@ def creteNumTeamsEntrantsForYear():
     df.columns = ['year', 'value']
     df.sort_values(by="year", inplace=True)  
     print(df) 
-    fig = px.line(df, x="year", y="value", title="GP for year", markers = True, height=400)
+    fig = px.line(df, 
+                  x="year",
+                  y="value", 
+                  title="GP for year", 
+                  markers = True, 
+                  color_discrete_sequence=f1db_utils.custom_colors,
+                  height=400)
     fig.update_yaxes(title_text='#Constructor')
 
     utility.figDesign(fig, "Total teams for year")
@@ -189,21 +196,24 @@ def createCostructorGeo():
     [df1, df2] = getGeoData()
     print(df2)
 
-    df = pd.DataFrame(columns=['Teams', 'Country', 'code'])
+    df = pd.DataFrame(columns=['Teams', 'Country', 'Continent','code'])
     for index, value in df1['fullName'].items():
         
         countrieId = df1["countryId"][index]
         
         alpha3Code = df2.loc[df2['id'] == countrieId, "alpha3Code"]
+        continent = df2.loc[df2['id'] == countrieId, "continentId"]
         if not alpha3Code.empty:
-            alpha3Code = alpha3Code.iloc[0]
-            df = df._append({'Teams': value, 'Country':countrieId, 'code': alpha3Code}, ignore_index=True)
+            if not continent.empty:
+                continent = continent.iloc[0]
+                alpha3Code = alpha3Code.iloc[0]
+                df = df._append({'Teams': value, 'Country':countrieId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
 
-    df_grouped = df.groupby(['code', 'Country']).agg({'Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
+    df_grouped = df.groupby(['code', 'Country']).agg({'Continent': 'first','Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
     print(df_grouped)
 
     # Creare il plot
-    fig = px.scatter_geo(df_grouped, locations='code', hover_name='Country', hover_data={'Teams': True, 'code': False}, height=400)
+    fig = px.scatter_geo(df_grouped, locations='code', color='Continent', hover_name='Country', hover_data={'Teams': True, 'code': False}, height=400)
 
     utility.figDesign(fig, "Constructor Position")
 
