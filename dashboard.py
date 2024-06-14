@@ -184,8 +184,9 @@ def render_content(tab):
                             dcc.Graph(id="circuits-gp-held")
                         ]), width=6
                     ), dbc.Col(
-                        dbc.Stack([
-                            dcc.Graph(id="circuits-pole-win")
+                        dbc.Stack([ 
+                            circuits.quali_race_range,
+                            dcc.Graph(id="circuits-quali-race-results")
                         ]), width=6)
                 ]),
                 html.Br(),
@@ -280,22 +281,29 @@ def update_graph(radio_value, dropdown_value, range_value, driver):
 
 
 # =================2================= CIRCUITS
-circuits_max_gp_held = 0
+circuits_vars = {
+    "gp_held_max": 0,
+    "quali_race_range_min": -10,
+    "quali_race_range": [-10,50],
+    "quali_race_range_max": 50,
+}
 @app.callback(
     [Output("circuits-gp-held-min-value-id", "max"),
     Output("circuits-gp-held-min-value-id", "marks")],
     Input("circuits-gp-held", "figure"))
 def circuits_update_slider_marks(figure):
-    return [circuits_max_gp_held, {0:"0", str(circuits_max_gp_held):str(circuits_max_gp_held)}]
+    return [circuits_vars["gp_held_max"], {0:"0", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
 
+
+# UP-LEFT GRAPH
 @app.callback(
     Output("circuits-gp-held", "figure"),
     Input("circuits-gp-held-min-value-id", "value")
 )
 def circuits_update_gp_held(min_value):
-    global circuits_max_gp_held
+    global circuits_vars
     df = circuits.get_gp_held(min_value)
-    circuits_max_gp_held = df["totalRacesHeld"].max()
+    circuits_vars["gp_held_max"] = df["totalRacesHeld"].max()
     fig = px.bar(
         df,
         x = "name",
@@ -319,6 +327,9 @@ def circuits_update_gp_held(min_value):
     return fig
 
 
+
+
+# BOTTOM GRAPH
 @app.callback(
     Output("circuits-qualifying", "figure"),
      Input("circuits-dropdown", "value")
@@ -365,38 +376,93 @@ def circuits_update_qualifying(circuitsIds):
     #.for_each_trace(lambda t: t.update(name = drivers.driver_type[t.name])
 
 
+# UP-RIGHT GRAPH
 @app.callback(
-    Output("circuits-pole-win", "figure"),
-    Input("circuits-dropdown", "value")
+    [Output("circuits-quali-race-range-id", "min"),
+    Output("circuits-quali-race-range-id", "max")],
+    Input("circuits-quali-race-results", "figure")
 )
-def circuits_update_wins_poles(circuitsId):
-    # partendo dalle prime 2 file (quattro posizioni o tre) => dove vai a finire
-
-    df = circuits.get_wins_poles(circuitsId)
-    """data = {
-    'q': [1, 1, 1, 2, 3],
-    'r': [1, 1, 1, 1, 4]
-    }
-    df = pd.DataFrame(data)
-    df['frequency'] = df.groupby(['q', 'r'])['q'].transform('size')
-    # Creazione del grafico a dispersione
-    fig = px.scatter(df, x='q', y='r', size='frequency',
-                    labels={'started_in_pole': 'Started in Pole Position', 'won_race': 'Won the Race'},
-                    title='Correlation between Starting in Pole Position and Winning the Race')
-
-    # Aggiunta di una linea di tendenza
-    # fig.add_trace(px.scatter(df, x='started_in_pole', y='won_race', trendline='ols').data[1])
-
-    # Mostrare il grafico """
+def circuits_update_quali_race(figure):
+    return [
+        circuits_vars["quali_race_range_min"],
+        circuits_vars["quali_race_range_max"]
+    ]
     
-    df["frequency"] = df.groupby(["positionQualifying","positionRace"])["positionQualifying"].transform("size")
-    df.drop_duplicates(subset=["positionQualifying", "positionRace"], inplace=True) # TODO => NO, visualizzo su HOVER elenco year, driver-name (come costruttori-mondo)
-    df.reset_index(inplace=True)
-    df.drop(columns=["index"], inplace=True)
-    print(df.sort_values(by="positionQualifying").head(20))
-    fig = px.scatter(df, x='positionQualifying', y='positionRace', size='frequency',
-                    labels={'started_in_pole': 'Started in Pole Position', 'won_race': 'Won the Race'},
-                    title='Correlation between Starting in Pole Position and Winning the Race')
+@app.callback(
+    Output("circuits-quali-race-results", "figure"),
+    [Input("circuits-dropdown", "value"),
+     Input("circuits-quali-race-range-id", "value")]
+)
+def circuits_update_quali_race(circuitsId, qualiRange):
+    if len(circuitsId) == 0: return f1db_utils.warning_empty_dataframe
+    # partendo dalle prime 2 file (quattro posizioni o tre) => dove vai a finire
+    global circuits_vars
+    df = circuits.get_quali_race(circuitsId)
+    circuits_vars["quali_race_range_min"] = df["positionQualifying"].min()
+    circuits_vars["quali_race_range_max"] = df["positionQualifying"].max()
+    
+    
+    # Filter by Qualifying Position Range
+    df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1]))))] 
+
+
+
+    df.sort_values(by="raceId", inplace=True, ascending=False)
+    total_qualifying = df['positionQualifying'].value_counts().reset_index()
+    total_qualifying.columns = ['positionQualifying', 'total']
+
+    freq_df = df.groupby(['positionQualifying', 'positionRace']).size().reset_index(name='count')
+    freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
+
+
+    race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
+        lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
+    ).reset_index(name='raceDriverInfo')
+    freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
+
+  
+    
+    def format_race_driver_info(race_driver_info):
+        max_display = 5
+        if len(race_driver_info) > max_display:
+            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info[:max_display]]) + f'<br>and {len(race_driver_info) - max_display} more'
+        else:
+            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info])
+
+    freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(format_race_driver_info)
+    freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
+    
+    #print(freq_df.head())
+ 
+    
+    
+    
+    
+    
+    freq_df.reset_index(inplace=True)
+    freq_df.drop(columns=["index"], inplace=True)
+                    
+    fig = px.scatter(freq_df, 
+                x = 'positionQualifying', 
+                y = 'positionRace', 
+                size = 'count',
+                hover_data={'count': True, 'positionQualifying': True, 'positionRace': True},
+                labels={'started_in_pole': 'Started in Pole Position', 'won_race': 'Won the Race'},
+                title='Correlation between Starting in Pole Position and Winning the Race'
+    )
+    
+    fig.update_traces(hovertemplate=
+        'Q: <b>%{x}</b><br>R: <b>%{y}</b><br>Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
+        '%{customdata[2]}'
+    )
+    
+    
+    # Aggiungere i raceId come customdata
+    fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
+    
+    
+    
+    
     
     return fig if len(circuitsId) == 1 else warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
 
