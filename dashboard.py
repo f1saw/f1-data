@@ -181,10 +181,10 @@ def render_content(tab):
                 html.Hr(),
                 dbc.Row([
                     dbc.Col(
-                        dcc.Graph(id="season_graph", figure=season.createSeason_GP_Plot())
+                        dcc.Graph(id="season_GP_graph", figure=season.createSeason_GP_Plot())
                     ),
                     dbc.Col(
-                        dcc.Graph(id="season_graph", figure=season.createSeasonGeo())
+                        dcc.Graph(id="season_Geo_graph", figure=season.createSeasonGeo())
                     )
                 ]),
                 html.Div(
@@ -193,7 +193,7 @@ def render_content(tab):
                 ),
                 dbc.Row(
                     dbc.Col(
-                        dcc.Graph(id="season_graph", figure=season.createSeasonDriverPlot())
+                        dcc.Graph(id="season_graph") #figure=season.createSeasonDriverPlot())
                     )
                 )
             ], className="d-flex flex-column justify-content-between gap-2")
@@ -266,7 +266,8 @@ def render_content(tab):
                     width=3),
                     dbc.Col(
                         teams.createDropdown(),
-                        width=6
+                        width=6,
+                        id = "dropdown_col"
                     ),
                 ]),
                 dbc.Row([
@@ -302,11 +303,13 @@ def update_dropdown(slider_value):
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
                Input('range-slider', 'value'),
-               Input('dropdown_drivers', 'value')])
-def update_graph(radio_value, range_value, driver):
-    if (driver!=[]):
-        return season.createSeasonDriverPlot(radio_value, range_value, driver) 
-    return season.createSeasonDriverPlot(radio_value, range_value)   
+               Input('dropdown_drivers', 'value'),
+               Input('dropdown_drivers', 'options')])
+def update_graph(radio_value, range_value, driver, option):
+    print(option[0]['value'])
+    if(driver == []):
+        driver = option[0]['value']
+    return season.createSeasonDriverPlot(radio_value, range_value, driver) 
  
 #### 
 # 
@@ -314,17 +317,21 @@ def update_graph(radio_value, range_value, driver):
 #   
 @callback(Output('teams_graph', 'figure'),
              [Input('radio-input-teams', 'value'),
-              Input('teams-slider', 'value')])
-def update_teams_graph(radio_value, slider_value):
-    if (radio_value == 'win'):
-        return teams.createWinConstructorPlot(slider_value)
-    #elif(radio_value == "best race"):
-     #   return teams.createRaceConstructPlot(slider_value)
-    elif(radio_value == "win race"):
-        return teams.createRaceWinPlot(slider_value)
+              Input('teams-slider', 'value'),
+              Input('radio-input-graph', 'value'),
+              Input('dropdown', 'value')])
+def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_value):
+    if (radio_graph_value == 'trend'):
+        return teams.createConstructorTrend(radio_value, dropdown_value)
     else:
-        return teams.createTotalPodiumPlot(slider_value)
-
+        if (radio_value == 'win'):
+            return teams.createWinConstructorPlot(slider_value)
+        #elif(radio_value == "best race"):
+        #   return teams.createRaceConstructPlot(slider_value)
+        elif(radio_value == "win race"):
+            return teams.createRaceWinPlot(slider_value)
+        else:
+            return teams.createTotalPodiumPlot(slider_value)
 
 # TODO -> prendere dinamicamente i valori 16, 32 etc
 @app.callback(
@@ -341,6 +348,16 @@ def update_teams_slider(radio_input):
         return 20, 1, {i: str(i) for i in range(1, 20+1)}
     else:
         return 37, 1, {i: str(i) for i in range(1, 37+1)}
+
+
+@callback(Output('dropdown_col', 'children'),
+             [Input('teams-slider', 'value'),
+              Input('radio-input-teams', 'value')])
+def update_option_dropdown(slider_value, radio_value):
+    return teams.createDropdown(slider_value, radio_value)
+
+
+
 
 
 

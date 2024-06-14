@@ -115,8 +115,10 @@ def crateDriverElement(slider_value):
                 ])
 
 
-def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1990, 1995], driver=['ayrton-senna', 'alain-prost']):
+def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1990, 1995], driver=['']):
     data = getSeasonDrivingStanding()
+    if isinstance(driver, str):
+        driver = [driver]
    
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     

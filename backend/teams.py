@@ -35,6 +35,24 @@ def getGeoData():
 
     return [df1,df2]
 
+def getExtraTeamData():
+    current_path = os.path.abspath(__file__)
+    directory_path = os.path.dirname(current_path)
+
+    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-seasons-constructor-standings.csv')
+    
+    return df
+
+def getRaceTeamsData():
+    current_path = os.path.abspath(__file__)
+    directory_path = os.path.dirname(current_path)
+
+    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-races-constructor-standings.csv')
+    df2 = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-races.csv')
+
+    return [df,df2]
+
+
 def createRadioButton():
     return dbc.RadioItems(
                       # Sono le 3 opzioni
@@ -68,15 +86,24 @@ def createRadioButtonGraph():
                       style={'marginBottom': 20, 'marginLeft': 7}
                 )
 
-def createDropdown():
+def createDropdown(min_value = 1, radio_value = 'win'):
+    df = getTeamsData()
+    if (min_value is None):
+        min_value = 1
+    if (radio_value == 'win'):
+        df.sort_values(by='totalChampionshipWins', ascending=False, inplace=True)
+        df = df.loc[df['totalChampionshipWins'] >= min_value]
+    elif (radio_value == 'win race'):
+        df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
+        df = df.loc[df['totalRaceWins'] >= min_value]
+    else:
+        df.sort_values(by='totalPodiums', ascending=False, inplace=True)
+        df = df.loc[df['totalPodiums'] >= min_value]
     return dcc.Dropdown(
     id='dropdown',
-    options=[
-        {'label': 'Season Map', 'value': 'Season Map'},
-        {'label': 'Season Driver', 'value': 'Season Driver'},
-        {'label': 'Season Gran Prix', 'value': 'Season Gran Prix'}
-    ],
-    value='Season Map',
+    options = [{'label': value, 'value': value} for index,value in df['fullName'].items() ],
+    value=df['fullName'].iloc[0],
+    multi=True,
     style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
     )
 
@@ -190,3 +217,50 @@ def createCostructorGeo():
     ),
     
     return fig
+
+def createConstructorTrend(graph_info, teamName):
+    df = getTeamsData()
+    if isinstance(teamName, str):
+        teamName = [teamName]
+    df = df.loc[df['fullName'].isin(teamName)]
+    match graph_info:
+        case 'win':
+            df2 = getExtraTeamData()
+            df2 = df2[df2['constructorId'].isin(df['id'])]
+            df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
+            df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            fig = px.line(df2, x='year', y='RowNumber', color='constructorId', markers=True)
+            fig.update_yaxes(title_text='# Championship Win')
+
+        case 'win race':
+            [df2, df3] = getRaceTeamsData()
+            df2 = df2[df2['constructorId'].isin(df['id'])]
+            df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
+            df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            df3 = df3[df3['id'].isin(df2['raceId'])]
+            df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
+            fig = px.line(df2, x='date', y='RowNumber', color='constructorId', markers=True)
+            fig.update_yaxes(title_text='# Race Win')
+        
+        case 'podiums':
+            [df2, df3] = getRaceTeamsData()
+            df2 = df2[df2['constructorId'].isin(df['id'])]
+            df2 =df2.loc[(df2['positionNumber'] == 1) | (df2['positionNumber'] == 2) | (df2['positionNumber'] == 3)].reset_index()
+            df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            df3 = df3[df3['id'].isin(df2['raceId'])]
+            df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
+            print(df2)
+            fig = px.line(df2, x='date', y='RowNumber', color='constructorId', markers=True)
+            fig.update_yaxes(title_text='# Race Win')
+    
+   
+    utility.figDesign(fig, f'{teamName} Trend')
+    return fig
+
+"""
+df = getTeamsData()
+    df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
+    if (min_value is None):
+        min_value = 1
+    df = df.loc[df['totalRaceWins'] >= min_value]
+"""
