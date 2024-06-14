@@ -18,6 +18,7 @@ https://github.com/f1db/f1db
 - [ ] mismatch data in teams absolute/trend
 - [ ] graphic problem in teams radio button
 - [ ] change the data view when hovering over graphs
+- [ ] esplosione hovered nel grafico season
 
 
 ### GENERAL

@@ -6,7 +6,7 @@ def figDesign(fig, title):
 
     fig.update_layout(
         transparent_bg,
-        height=500,
+        height=400,
         title = {
             "text": title,
             'x':0.5,
