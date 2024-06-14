@@ -3,31 +3,26 @@ https://github.com/f1db/f1db
 
 
 ### TODO | MATTE
-- [ ] CIRCUITS | RACE_QUALI => visualizzo su HOVER elenco year, driver-name (come costruttori-mondo)
+- [ ] DRIVERS | UI  | drivers / trend => visualizzare nel dropdown solo piloti che hanno vinto mondiali o che hanno dati
+- [ ] DRIVERS | UI  | show total podiums count in absolute graph
+- [ ] DRIVERS | UI  | absolute => show only min value ; trend => show only select driver
+- [ ] DRIVERS | UI  | elencare nome piloti come teams (da mettere anche in seasons)
 
+- [ ]         | FIX | Empty dataset warning
+- [ ]         | UI  | add drivers' flag on the top of the bar chart
 
-
-
-- [ ] sistemo codice x bene
-- [ ] add drivers' flag on the top of the bar chart
-- [ ] absolute => show only min value ; trend => show only select driver
-- [ ] bug with empty dataset
-- [ ] show total podiums count in absolute graph
 - [ ] how to put callbacks in different file
-- [ ] CIRCUITS:
-  #gp_held | ... ??qualifying_gap_comparison_between_1st_2nd?? ?? in a circuit, how many times who started on pole / 1st row ended up 1st
-  qualifying_pole_lap_time (?? aggiungere lap time medio in gara ? (tempo_gara/#giri) ??)
-  
-?? differenziazione ROAD|STREET|RACE circuiti negli anni ?? (come official e test drivers)
-- [ ] DRIVERS | mondo =>  elencare nome piloti come teams (da mettere anche in seasons)
-- [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
-- [ ] commentare cosa prendono, fanno e restituiscono le funzioni
+
 
 ### ESPLOSIONI | MAURI
 - [ ] mismatch data in teams absolute/trend
 - [ ] graphic problem in teams radio button
 - [ ] change the data view when hovering over graphs
 
+
+### GENERAL
+- [ ] mettere valori di default x mostrare qualche grafico al caricamento (es. seasons => hamilton, verstapppen, leclerc)
+- [ ] commentare cosa prendono, fanno e restituiscono le funzioni
 
 ==================================================================================
 
