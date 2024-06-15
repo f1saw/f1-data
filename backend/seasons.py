@@ -9,7 +9,6 @@ import dash_bootstrap_components as dbc
 
 import os
 from datetime import datetime
-import utility.utility as utility
 import backend.f1db_utils as f1db_utils
 
 # selezione anni -> prendo piloti in quegli anni e si vede come variano nel tempo i piazzamenti finali

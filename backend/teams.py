@@ -9,7 +9,6 @@ import dash_bootstrap_components as dbc
 
 import os
 from datetime import datetime
-import utility.utility as utility
 import backend.f1db_utils as f1db_utils
 
 labels_dict = {
@@ -153,8 +152,8 @@ def createWinConstructorPlot(min_value = 0):
         min_value = 1
     df = df.loc[df['totalChampionshipWins'] >= min_value]
     fig = px.bar(df, x='fullName', y='totalChampionshipWins', 
-                color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
-                color_discrete_map=utility.colors,
+                color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
+                color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
                 template=f1db_utils.template
     ).update_layout(
@@ -179,8 +178,8 @@ def createRaceWinPlot(min_value = 0):
         min_value = 1
     df = df.loc[df['totalRaceWins'] >= min_value]
     fig = px.bar(df, x='fullName', y='totalRaceWins',
-                color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
-                color_discrete_map=utility.colors,
+                color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
+                color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
                 template=f1db_utils.template
     ).update_layout(
@@ -205,8 +204,8 @@ def createTotalPodiumPlot(min_value = 1):
     # print(min_value)
     df = df.loc[df['totalPodiums'] >= min_value]
     fig = px.bar(df, x='fullName', y='totalPodiums',
-                color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
-                color_discrete_map=utility.colors,
+                color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
+                color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
                 template=f1db_utils.template
     ).update_layout(
@@ -308,7 +307,7 @@ def createCostructorGeo():
         title = f1db_utils.getTitleObj("Spread of Teams Around the World"),
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(13)
-    ).update_geos(f1db_utils.update_geos)
+    ).update_geos(f1db_utils.update_geos).update_geos(resolution=110)
     
     return fig
 
@@ -342,8 +341,8 @@ def createConstructorTrend(graph_info, teamName):
                 hover_data = {
                     "fullName": True
                 }
-            ).update_layout(hovermode="x")
-            fig.update_yaxes(title_text='# Championship Win')
+            ).update_layout(hovermode="x", title=f1db_utils.getTitleObj("WCCs Trend"))
+            fig.update_yaxes(title_text='Number of WCCs')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
                 hovertemplate="<br>".join([
@@ -374,8 +373,8 @@ def createConstructorTrend(graph_info, teamName):
                 labels=labels_dict,
                 hover_data = {
                     "fullName": True
-                }).update_layout(hovermode="x")
-            fig.update_yaxes(title_text='# Race Win')
+                }).update_layout(hovermode="x", title=f1db_utils.getTitleObj("Wins Trend"))
+            fig.update_yaxes(title_text='Number of Wins')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
                 hovertemplate="<br>".join([
@@ -408,8 +407,8 @@ def createConstructorTrend(graph_info, teamName):
                 labels=labels_dict,
                 hover_data = {
                     "fullName": True
-                }).update_layout(hovermode="x")
-            fig.update_yaxes(title_text='# Podiums')
+                }).update_layout(hovermode="x", title=f1db_utils.getTitleObj("Podiums Trend"))
+            fig.update_yaxes(title_text='Number of Podiums')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
                 hovertemplate="<br>".join([
@@ -418,9 +417,9 @@ def createConstructorTrend(graph_info, teamName):
                 hoverlabel = f1db_utils.getHoverlabel(13)
              )
 
-    
-   
-    utility.figDesign(fig, f'{teamName} Trend')
+    fig.update_layout(
+        f1db_utils.transparent_bg
+    )
     return fig
 
 """
