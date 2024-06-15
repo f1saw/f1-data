@@ -1,5 +1,5 @@
 # File      BACKEND | SEASONS
-# Authors   Maurizio Meschi
+# Author    Maurizio Meschi
 
 import pandas as pd
 import plotly.express as px

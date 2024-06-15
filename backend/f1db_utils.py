@@ -1,3 +1,6 @@
+# File      BACKEND | f1db_utils
+# Author    Matteo Naccarato
+
 from datetime import datetime
 from enum import Enum
 import pandas as pd

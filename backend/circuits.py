@@ -1,3 +1,6 @@
+# File      BACKEND | CIRCUITS
+# Author    Matteo Naccarato
+
 import pandas as pd
 from datetime import datetime
 from dash import Dash, dcc, html, Input, Output, callback
