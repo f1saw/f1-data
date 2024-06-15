@@ -17,7 +17,7 @@ labels_dict = {
     "qualifyingFormat": "Qualifying Format",
     "circuitName": "Circuit",
     "circuitId": "Circuit",
-    "totalRacesHeld": "Races Held",
+    "totalRacesHeld": "GP Held",
     "name": "Circuit Name",
     "fullName": "Circuit Name",
     "type": "Circuit Type",

@@ -20,7 +20,7 @@ labels_dict = {
     "year": "Year",
     "continentName": "Continent",
     "number_gps": "Count",
-    "grand_prix_fullName": "Grands Prix Names",
+    "grand_prix_fullName": "GP Names",
     "driverName": "Driver"
 }
 
@@ -68,7 +68,7 @@ def getGeoDataGp():
 
 # FUNCTIONS | PLOTS
 
-# UP-LEFT GRAPH | Number of Grands Prix Over the Years
+# UP-LEFT GRAPH | Number of GP Over the Years
 def createSeason_GP_Plot():
     data = getSeasonGp()
     gp_count_for_year = data['year'].value_counts()
@@ -86,15 +86,15 @@ def createSeason_GP_Plot():
         template = f1db_utils.template
     ).update_layout(
         f1db_utils.transparent_bg,
-        title = f1db_utils.getTitleObj("Number of Grands Prix Over the Years"),
+        title = f1db_utils.getTitleObj("Number of GP Over the Years"),
         hovermode = "x"
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(),
         hovertemplate="<br>".join(["<b>%{y}</b><extra></extra>"])
-    ).update_yaxes(title_text='Number of Grands Prix')
+    ).update_yaxes(title_text='Number of GP')
     
 
-# UP-RIGHT GRAPH | Numbers of Grands Prix by Country
+# UP-RIGHT GRAPH | Numbers of GP by Country
 def createSeasonGeo():
     [df1, df2, df3] = getGeoDataGp()
     gp_count_for_year = df1['grandPrixId'].value_counts()
@@ -167,7 +167,7 @@ def createSeasonGeo():
         template = f1db_utils.template
     ).update_layout(
         f1db_utils.transparent_bg,
-        title = f1db_utils.getTitleObj("Number of Grands Prix by Country"),
+        title = f1db_utils.getTitleObj("Number of GP by Country"),
     ).update_geos(f1db_utils.update_geos).update_traces(hoverlabel = f1db_utils.getHoverlabel(14))
     
 
@@ -197,6 +197,7 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
         labels = labels_dict,
         color_discrete_sequence=f1db_utils.custom_colors,
         template = f1db_utils.template,
+        hover_data = { "driverName": True }
     ).update_layout(
         f1db_utils.transparent_bg,
         hovermode = "x",
@@ -206,7 +207,7 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
     if (radio_button_value == "positionNumber"):
         fig.update_traces(
             hoverlabel = f1db_utils.getHoverlabel(),
-            hovertemplate="<br>".join(["Position: <b>%{y}</b><extra></extra>"])
+            hovertemplate="<br>".join(["%{customdata} <b>(%{y})</b><extra></extra>"])
         )
         fig.update_yaxes(autorange="reversed", title_text='WDC Position')
     else:

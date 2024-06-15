@@ -3,6 +3,7 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import numpy as np
+from datetime import datetime
 
 import frontend.drivers
 import backend.seasons as seasons
@@ -23,7 +24,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callb
 
 # TABS STRUCTURE
 tabs = ["seasons", "circuits", "drivers", "teams"]
-STARTING_TAB = 0
+STARTING_TAB = 1
 tabs_children = []
 for idx, tab in enumerate(tabs):
     tabs_children.append(dcc.Tab(
@@ -118,23 +119,29 @@ def render_content(tab):
                 ]),
                 dbc.Stack([
                     dbc.Row([
-                        dbc.Col([
-                            dbc.Stack([
+                        html.Div([
+                            html.Div([
                                 html.Label("Type of Graph"),
-                                drivers.drivers_performance_type_graph_radio
-                            ], direction="horizontal", gap=3),
-                            dbc.Stack([
-                                html.Label("Performance Type"),
+                                html.Label("Performance Type")
+                            ], className="d-flex flex-column px-5"),
+                            html.Div([
+                                drivers.drivers_performance_type_graph_radio,
                                 drivers.drivers_performance_type_radio
-                            ], direction="horizontal", gap=3),
-                        ], width=4),
-                        dbc.Col([
-                            dbc.Row([
-                                dbc.Col(html.Label("Min Value"), width=2),
-                                dbc.Col(drivers.drivers_performance_min_value, width=7) 
-                            ], id="drivers-min-value-id"),
-                            dbc.Col(drivers.drivers_performance_dropdown, width=9)
-                        ], width=4)
+                            ], className="d-flex flex-column align-items-center"),
+                            html.Div([
+                                dbc.Col([
+                                    html.Div([
+                                        html.Label("==============", style={"color": "rgb(33,37,41)"}),
+                                        html.Label("Min Value"),
+                                        html.Label("==============", style={"color": "rgb(33,37,41)"})
+                                    ]),
+                                    drivers.drivers_performance_min_value 
+                                ], id="drivers-min-value-id", width=12),
+                                dbc.Col(drivers.drivers_performance_dropdown, width=12, style={"max-width":"50px;"})
+                            ])
+                        ], className="d-flex gap-4"), #direction="horizontal", gap=3)
+                        # dbc.Col([
+                        # ], width=4)
                     ]),
                     dcc.Graph(id="drivers-performance")
                 ])
@@ -297,8 +304,8 @@ def circuits_update_gp_held(min_value):
         hover_data = {
             "name": False,
             "fullName": False,
-            "type": True,
-            "countryName": True
+            "countryName": True,
+            "type": True
         },
         template = f1db_utils.template,
         color_discrete_sequence =[f1db_utils.podium_colors["count_position_2"]]
@@ -306,6 +313,9 @@ def circuits_update_gp_held(min_value):
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Number GP Helds by Circuits"),
         hovermode = "x"
+    ).update_traces(
+        hoverlabel=f1db_utils.getHoverlabel(),
+        hovertemplate="<b>%{y}</b>, %{customdata[1]}<br>Type: %{customdata[2]}<extra></extra>"
     ) if not df.empty else f1db_utils.warning_empty_dataframe
     
     
@@ -346,21 +356,12 @@ def circuits_update_quali_race(circuitsId, qualiRange):
 
     freq_df = df.groupby(['positionQualifying', 'positionRace']).size().reset_index(name='count')
     freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
-
-
-    # Needed to handle hovertemplate properly
-    def format_race_driver_info(race_driver_info):
-        max_display = 5 # TODO => make it as a const
-        if len(race_driver_info) > max_display:
-            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info[:max_display]]) + f'<br>and {len(race_driver_info) - max_display} more'
-        else:
-            return '<br>'.join([f"{item['officialName']} ({item['driverName']})" for item in race_driver_info])
-        
+    
     race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
         lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
     ).reset_index(name='raceDriverInfo')
     freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
-    freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(format_race_driver_info)
+    freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(frontend.drivers.format_race_driver_info)
     freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
     
     freq_df.reset_index(inplace=True)
@@ -387,7 +388,8 @@ def circuits_update_quali_race(circuitsId, qualiRange):
         hovertemplate='Q: <b>%{x}</b><br>' + 
         'R: <b>%{y}</b><br>' + 
         'Count: <b>%{marker.size}</b> / %{customdata[0]} (<b>%{customdata[1]:.0f}%</b>)<br>' +
-        '%{customdata[2]}'
+        '%{customdata[2]}',
+        hoverlabel = f1db_utils.getHoverlabel(14)
     )
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
     
@@ -418,9 +420,10 @@ def circuits_update_qualifying(circuitsIds):
         hover_data = {
             "year": False,
             "timeMillis": False,
+            "circuitName": True,
             "time": True,
-            "qualifyingFormat": True,
-            "driverName": True
+            "driverName": True,
+            "qualifyingFormat": True
         },
         color_discrete_sequence=f1db_utils.custom_colors,
         template = f1db_utils.template
@@ -434,6 +437,9 @@ def circuits_update_qualifying(circuitsIds):
             tickmode='array',
             title="Lap Time"
         )
+    ).update_traces(
+            hoverlabel = f1db_utils.getHoverlabel(14),
+            hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (%{x})<br><b>%{customdata[1]}</b>, <i>%{customdata[2]}</i><extra></extra>"])
     ) if not df.empty else f1db_utils.warning_empty_dataframe
 
 # =================2=================
@@ -557,16 +563,27 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
 
     elif selected_drivers is not None: # Performance Trend
         df = drivers.getTrendPerformance(selected_drivers, performance_type)
-        drivers.labels_dict["progressiveCounter"] = f"{drivers.labels_dict[performance_type]} Trend"
+        drivers.labels_dict["progressiveCounter"] = f"Number of {drivers.labels_dict[performance_type]}"
         
         hover_data = {
+            "driverName": True,
             drivers.performanceType2TimeAxis[performance_type]: False
         }
         if performance_type != f1db_utils.PerformanceType.WDCS.value:
             hover_data["officialName"] = True
         
+        
+        
+        # Extend lines until current date
+        """if performance_type != f1db_utils.PerformanceType.WDCS.value:
+            print(df.head())
+            current_date = pd.to_datetime(datetime.now().strftime('%Y-%m-%d'))
+            last_date = df['date'].max()
+            print(last_date)"""
+        
         df = f1db_utils.order_df(df, "driverId", selected_drivers)
         
+        show_gp_name = "%{customdata[1]}" if performance_type != f1db_utils.PerformanceType.WDCS.value else ""
         return [px.line(
             df,
             x = drivers.performanceType2TimeAxis[performance_type], 
@@ -582,6 +599,9 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
             title = f1db_utils.getTitleObj(f"{drivers.labels_dict[performance_type]} Trend"),
             hovermode = "x"
+        ).update_traces(
+            hoverlabel = f1db_utils.getHoverlabel(13),
+            hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (<b>%{y}</b>)<br>" + show_gp_name + "<extra></extra>"])
         ) if not df.empty else f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
 
     else:

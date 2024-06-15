@@ -18,7 +18,6 @@ seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 
 MONTH_END_SEASON = 12
 INFINITE_RESULT = 100
-MAX_QUALI = 30
 HOVERLABEL_FONT_SIZE_DEFAULT = 16
 F1_RED = "rgb(247,1,0)"
 

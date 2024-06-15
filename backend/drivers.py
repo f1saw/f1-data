@@ -215,16 +215,9 @@ def getTrendPerformance(selected_drivers, performanceType):
     
     selected_drivers_mask = df["driverId"].isin(selected_drivers) 
     df = df[selected_drivers_mask]
-    df = df[performanceType2Mask(df, performanceType)]
-    
-    # Get years when selected drivers have raced
-    """"driversRacingYears = df.groupby("driverId").apply(
-        lambda x: x[['year', 'positionNumber']].to_dict('records')
-    ).to_dict()
-    print(driversRacingYears)"""
-    
-    
-    #df = df[get_p1_mask(df, performanceType)]
+    #if performanceType != f1db_utils.PerformanceType.WDCS.value: # TODO => put them if u wanna winning markers only 
+        #df = df[performanceType2Mask(df, performanceType)]
+        
     df.reset_index(inplace=True)
     match performanceType:
         case f1db_utils.PerformanceType.WDCS.value:
@@ -237,13 +230,10 @@ def getTrendPerformance(selected_drivers, performanceType):
             df_races.drop(columns=df_races.columns.difference(["raceId","date","grandPrixId","officialName","circuitId"]), inplace=True)
             df = pd.merge(df, df_races, on="raceId", how="left")
             
-            
-            
-         
+                     
     for driver_id in selected_drivers:
         counter[driver_id] = 0
     df["progressiveCounter"] = df.apply(count_p1 if performanceType != f1db_utils.PerformanceType.PODIUMS.value else count_podiums, axis=1)
-    
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
     # print(df.head())
     return df
