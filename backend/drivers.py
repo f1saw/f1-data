@@ -16,7 +16,7 @@ MONTH_END_SEASON = 12
 # TODO => wins, podiums, poles as ENUM
 
 # DICT
-drivers_dict = {
+labels_dict = {
     "driverId": "Driver",
     "driverName": "Driver",
     "count_position_1": "Wins",
@@ -31,7 +31,12 @@ drivers_dict = {
     "podiums": "Podiums",
     "year": "Year",
     "officialName": "GP",
-    "date": "Date"
+    "date": "Date",
+    "continentName": "Continent",
+    "count_display": "Number of Drivers",
+    "countryName": "Country",
+    "count": "Number of Drivers",
+    "driverInfo": "Drivers"
 }
 
 performanceType2file = {

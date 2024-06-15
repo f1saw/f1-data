@@ -19,6 +19,7 @@ seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 MONTH_END_SEASON = 12
 INFINITE_RESULT = 100
 MAX_QUALI = 30
+HOVERLABEL_FONT_SIZE_DEFAULT = 16
 F1_RED = "rgb(247,1,0)"
 
 
@@ -29,7 +30,7 @@ class PerformanceType(Enum):
     POLES = "poles"
     
     
-# ===============COLORS=====================
+# ===============UI=====================
 custom_colors = px.colors.qualitative.Light24.copy()
 custom_colors[0] = F1_RED
 
@@ -43,6 +44,7 @@ transparent_bg = {
     "plot_bgcolor": "rgba(0,0,0,0)",
     "paper_bgcolor": "rgba(0,0,0,0)"
 }
+
 
 # ===========================================
 
@@ -75,11 +77,26 @@ def getTitleObj(titleStr):
         'yanchor': 'top',
         'font': {'size': 18 }
     }
+    
+def getHoverlabel(fontSize = HOVERLABEL_FONT_SIZE_DEFAULT):
+    return dict(
+        bgcolor="white",
+        font_size=fontSize,
+    )
 
 continents_order = {
     "continentId": ['africa', 'antarctica', 'asia', 'australia', 'europe', 'north-america', 'south-america'],
     "continentName": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
 }
+
+update_geos = dict(
+    bgcolor="rgba(0,0,0,0)",
+    showland=True, 
+    landcolor="rgb(200,212,227)",
+    projection_type='orthographic',
+    showcoastlines=True,
+    resolution=50 # Slow but otherwise (resolution = 110), smaller countries (e.g. Monaco) will not be displayed
+)
 
 # ===========================================
 
