@@ -258,7 +258,7 @@ drivers_performance_type_graph_radio = dbc.RadioItems(
     id="drivers-performance-type-graph-id",
     options=[
         {"label": "Absolute", "value": "absolute"},
-        {"label": "Driver's Trend", "value": "trend"}
+        {"label": "Drivers' Trend", "value": "trend"}
     ],
     value="absolute",
     inline=True

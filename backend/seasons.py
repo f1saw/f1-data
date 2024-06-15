@@ -20,7 +20,8 @@ labels_dict = {
     "year": "Year",
     "continentName": "Continent",
     "number_gps": "Count",
-    "grand_prix_fullName": "Grands Prix Names"
+    "grand_prix_fullName": "Grands Prix Names",
+    "driverName": "Driver"
 }
 
 
@@ -169,8 +170,7 @@ def createSeasonGeo():
         title = f1db_utils.getTitleObj("Number of Grands Prix by Country"),
     ).update_geos(f1db_utils.update_geos).update_traces(hoverlabel = f1db_utils.getHoverlabel(14))
     
-    
-    
+
 # BOTTOM GRAPH
 def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1985, 1995], driver=['']):
     data = getSeasonDrivingStanding()
@@ -184,32 +184,38 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
     
     data_in_range = f1db_utils.order_df(data_in_range, "driverId", driver)
     
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
+    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","name"]), inplace=True)
+    df_drivers_info.rename(columns={"id":"driverId", "name": "driverName"}, inplace=True)
+    data_in_range = pd.merge(data_in_range, df_drivers_info, on="driverId", how="left")
+    
+    title = "Positions" if radio_button_value == "positionNumber" else "Points"
     fig = px.line(data_in_range, 
         x="year", 
         y=radio_button_value,  
-        color="driverId", 
+        color="driverName", 
+        labels = labels_dict,
         color_discrete_sequence=f1db_utils.custom_colors,
         template = f1db_utils.template,
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        hovermode = "x",
+        title = f1db_utils.getTitleObj(f"Drivers' {title} in WDCs")
     )
     fig.update_xaxes(dtick=1, tickmode='linear')
     if (radio_button_value == "positionNumber"):
         fig.update_traces(
-            hovertemplate="<br>".join([
-                "Year: %{x}",
-                "Position: %{y}<extra></extra>",
-            ])
+            hoverlabel = f1db_utils.getHoverlabel(),
+            hovertemplate="<br>".join(["Position: <b>%{y}</b><extra></extra>"])
         )
-        fig.update_yaxes(autorange="reversed", title_text='Position')
+        fig.update_yaxes(autorange="reversed", title_text='WDC Position')
     else:
         fig.update_traces(
-            hovertemplate="<br>".join([
-                "Year: %{x}",
-                "Points: %{y}<extra></extra>",
-            ])
+            hoverlabel = f1db_utils.getHoverlabel(),
+            hovertemplate="<br>".join(["Points: <b>%{y}</b><extra></extra>"])
         )
-        fig.update_yaxes(title_text='Points')
-    utility.figDesign(fig, "Driver's position in the drivers' championship")
-
+        fig.update_yaxes(title_text='WDC Points')
+    
     return fig
 
 
@@ -249,23 +255,42 @@ def createDropDownDrivers(slider_value=[1985, 1995]):
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     data_in_range = data_in_range['driverId'].unique()
     
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
+    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","name"]), inplace=True)
+    df_drivers_info.rename(columns={"id":"driverId", "name": "driverName"}, inplace=True)
+    
+    selected_drivers_mask = df_drivers_info["driverId"].isin(data_in_range) 
+    df_drivers_info = df_drivers_info[selected_drivers_mask]
+    # print(df_drivers_info)
+    
     return dcc.Dropdown(
         id='dropdown_drivers',
-        options = [{'label': value, 'value': value} for value in data_in_range ],
+        options = [{"label":row["driverName"], "value": row["driverId"]} for row in df_drivers_info.to_dict(orient="records") ],
+        #options = [{'label': value, 'value': value} for value in data_in_range ],
         multi=True,
         placeholder="Select a Driver",
         style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'},
         value=['ayrton-senna', 'alain-prost']
     )
 
-def updateDropDownDrivers(slider_value):
-    data = getSeasonDrivingStanding()
 
-    data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
-    data_in_range = data_in_range['driverId'].unique()
+def updateDropDownDrivers(slider_value): 
+    df_seasons_drivers_standings = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_driver_standings}")
+    df_seasons_drivers_standings.drop(columns=df_seasons_drivers_standings.columns.difference(["year","driverId"]), inplace=True)
+    data = df_seasons_drivers_standings.loc[
+        (df_seasons_drivers_standings["year"] >= slider_value[0]) 
+        & (df_seasons_drivers_standings["year"] <= slider_value[1])
+    ]
+        
+    df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
+    df_drivers_info.drop(columns=df_drivers_info.columns.difference(["id","name"]), inplace=True)
+    df_drivers_info.rename(columns={"id":"driverId", "name": "driverName"}, inplace=True)
     
-    return [{'label': value, 'value': value} for value in data_in_range]
-
+    data = pd.merge(data, df_drivers_info, on="driverId", how="left")
+    
+    return [{"label":row["driverName"], "value": row["driverId"]} for row in data.to_dict(orient="records")]
+    
+    
 def crateDriverElement(slider_value):
     if (slider_value is None):
         slider_value = [1985, 1995]

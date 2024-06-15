@@ -194,10 +194,11 @@ def render_content(tab):
 
 
 # =================1================= SEASONS
-@callback(Output('dropdown_drivers', 'options'),
+@callback([Output('dropdown_drivers', 'options'),
+           Output('dropdown_drivers', 'value')],
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
-        return seasons.updateDropDownDrivers(slider_value)
+        return [seasons.updateDropDownDrivers(slider_value), ['ayrton-senna', 'alain-prost']]
 
 
 
