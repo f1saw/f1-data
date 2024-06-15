@@ -267,10 +267,13 @@ def createCostructorGeo():
             if not continent.empty:
                 continent = continent.iloc[0]
                 alpha3Code = alpha3Code.iloc[0]
-                df = df._append({'Teams': value, 'Country':countryId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
+                df = df._append({'Teams': value, 'Country': countryId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
 
-    df_grouped = df.groupby(['code', 'Country']).agg({'Continent': 'first','Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
-    
+    df_count = df['Country'].value_counts().reset_index()
+    df_count.columns = ['Country', 'count']
+    df_grouped = df.groupby(['Country']).agg({'code': 'first', 'Continent': 'first','Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
+    df_grouped = df_grouped.merge(df_count, on='Country', how='left')
+
     df_countries = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.countries}")
     df_countries.rename(columns={"id":"Country", "name":"countryName"}, inplace=True)
     df_countries.drop(columns=df_countries.columns.difference(["Country", "countryName", "continentId"]), inplace=True)
@@ -287,7 +290,8 @@ def createCostructorGeo():
     fig = px.scatter_geo(
         df_grouped, 
         locations='code', 
-        color='continentName', 
+        color='continentName',
+        size='count', 
         labels=labels_dict,
         hover_name='countryName', 
         hover_data={'Teams': True, 'code': False}, 

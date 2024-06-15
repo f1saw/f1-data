@@ -38,7 +38,6 @@ def getSeasonData():
     i=0
     for path in csv_file:
         df_list[i] = pd.read_csv(directory_path + "/../f1db-csv/" + path)
-        #print(df_list[i])
         i += 1
     
     return df_list
@@ -239,11 +238,13 @@ def createRadioButtonDriver():
     )
 
 def createRangeSlider():
-    marks = {str(year): str(year) for year in range(1950, datetime.now().year + 1)}
+    dict1 = {str(year): str(year) for year in range(1950, datetime.now().year + 1, 10)}
+    dict2 = {str(datetime.now().year) : str(datetime.now().year)}
+    marks =  {**dict1, **dict2}
     return dcc.RangeSlider(
         1950, 
         datetime.now().year, 
-        1, 
+        10, 
         value=[1985, 1995], 
         marks=marks, 
         id='range-slider',

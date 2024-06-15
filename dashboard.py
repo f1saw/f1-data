@@ -574,8 +574,6 @@ def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_va
     else:
         if (radio_value == 'win'):
             return teams.createWinConstructorPlot(slider_value)
-        #elif(radio_value == "best race"):
-        #   return teams.createRaceConstructPlot(slider_value)
         elif(radio_value == "win race"):
             return teams.createRaceWinPlot(slider_value)
         else:
