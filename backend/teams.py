@@ -1,3 +1,6 @@
+# File      BACKEND | TEAMS
+# Authors   Maurizio Meschi
+
 import pandas as pd
 import plotly.express as px
 import dash
@@ -8,6 +11,11 @@ import os
 from datetime import datetime
 import utility.utility as utility
 import backend.f1db_utils as f1db_utils
+
+labels_dict = {
+    "fullName": "Constructor",
+    "continentName": "Continent"
+}
 
 def getTeamsData():
     current_path = os.path.abspath(__file__)
@@ -58,17 +66,16 @@ def createRadioButton():
     return dbc.RadioItems(
                       # Sono le 3 opzioni
                       options=[
-                          {"label":"Total Win", "value":"win"}, # opzione boxplot
+                          {"label":"WCCs", "value":"win"}, # opzione boxplot
                           #{"label":"Best Race Result", "value":"best race"},
-                          {"label":"Num Win Race", "value":"win race"},
-                          {"label":"Num Podiums", "value":"podiums"}
+                          {"label":"Wins", "value":"win race"},
+                          {"label":"Podiums", "value":"podiums"}
                       ],
                       # Impostiamo il valore di default
                       value="win",
                       # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
-                      id="radio-input-teams",
-                      style={'marginBottom': 20, 'marginLeft': 7}
+                      id="radio-input-teams"
                 )
 
 def createRadioButtonGraph():
@@ -84,7 +91,6 @@ def createRadioButtonGraph():
                       # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
                       id="radio-input-graph",
-                      style={'marginBottom': 20, 'marginLeft': 7}
                 )
 
 def createDropdown(min_value = 1, radio_value = 'win'):
@@ -100,12 +106,14 @@ def createDropdown(min_value = 1, radio_value = 'win'):
     else:
         df.sort_values(by='totalPodiums', ascending=False, inplace=True)
         df = df.loc[df['totalPodiums'] >= min_value]
+        
     return dcc.Dropdown(
-    id='dropdown',
-    options = [{'label': value, 'value': value} for index,value in df['fullName'].items() ],
-    value=df['fullName'].iloc[0],
-    multi=True,
-    style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
+        id='dropdown',
+        # options = [{'label': value, 'value': value} for index,value in df['fullName'].items() ],
+        options=[{"label":row["fullName"], "value": row["id"]} for row in df.to_dict(orient="records")],
+        value=df['id'].iloc[0],
+        multi=True,
+        style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
     )
 
 def createSlider():
@@ -147,14 +155,18 @@ def createWinConstructorPlot(min_value = 0):
     fig = px.bar(df, x='fullName', y='totalChampionshipWins', 
                 color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
                 color_discrete_map=utility.colors,
-                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
-    utility.figDesign(fig, "Total Championship Wins")
-    fig.update_yaxes(title_text='Total Championship Wins')
-    fig.update_xaxes(title_text='Team Name')
+                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
+                template=f1db_utils.template
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        hovermode="x"
+    )
+    fig.update_yaxes(title_text='Number of WCCs')
+    fig.update_xaxes(title_text='Team')
     fig.update_traces(
-        hovertemplate="<br>".join([
-            "Team Name: %{x}",
-            "Total Championship Wins: %{y}<extra></extra>",
+        hoverlabel=f1db_utils.getHoverlabel(),
+        hovertemplate="<br>".join([           
+            "<b>%{y}</b><extra></extra>",
         ])
     )
     return fig
@@ -169,14 +181,18 @@ def createRaceWinPlot(min_value = 0):
     fig = px.bar(df, x='fullName', y='totalRaceWins',
                 color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
                 color_discrete_map=utility.colors,
-                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
-    utility.figDesign(fig, "Total Race Win")
-    fig.update_yaxes(title_text='Total Race Win')
-    fig.update_xaxes(title_text='Team Name')
+                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
+                template=f1db_utils.template
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        hovermode="x"
+    )
+    fig.update_yaxes(title_text='Number of Wins')
+    fig.update_xaxes(title_text='Team')
     fig.update_traces(
-        hovertemplate="<br>".join([
-            "Team Name: %{x}",
-            "Total Race Win: %{y}<extra></extra>",
+        hoverlabel=f1db_utils.getHoverlabel(),
+        hovertemplate="<br>".join([           
+            "<b>%{y}</b><extra></extra>",
         ])
     )
     return fig
@@ -186,19 +202,23 @@ def createTotalPodiumPlot(min_value = 1):
     df.sort_values(by='totalPodiums', ascending=False, inplace=True)
     if (min_value is None):
         min_value = 1
-    print(min_value)
+    # print(min_value)
     df = df.loc[df['totalPodiums'] >= min_value]
     fig = px.bar(df, x='fullName', y='totalPodiums',
                 color_discrete_sequence =[utility.colors["count_position_1"]]*len(df),
                 color_discrete_map=utility.colors,
-                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},)
-    utility.figDesign(fig, "Total podiums for costructor")
-    fig.update_yaxes(title_text='Total podiums')
-    fig.update_xaxes(title_text='Team Name')
+                category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
+                template=f1db_utils.template
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        hovermode="x"
+    )
+    fig.update_yaxes(title_text='Number of Podiums')
+    fig.update_xaxes(title_text='Team')
     fig.update_traces(
-        hovertemplate="<br>".join([
-            "Team Name: %{x}",
-            "Total podiums: %{y}<extra></extra>",
+        hoverlabel=f1db_utils.getHoverlabel(),
+        hovertemplate="<br>".join([           
+            "<b>%{y}</b><extra></extra>",
         ])
     )
     return fig
@@ -209,76 +229,97 @@ def creteNumTeamsEntrantsForYear():
     df = df['year'].value_counts().reset_index()
     df.columns = ['year', 'value']
     df.sort_values(by="year", inplace=True)  
-    print(df) 
+    # print(df) 
     fig = px.line(df, 
                   x="year",
                   y="value", 
-                  title="GP for year", 
                   markers = True, 
                   color_discrete_sequence=f1db_utils.custom_colors,
-                  height=400)
-    fig.update_yaxes(title_text='#Constructor')
-    fig.update_xaxes(title_text='Team Name')
+                  template = f1db_utils.template
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        hovermode="x", 
+        title=f1db_utils.getTitleObj("Number of Teams Over the Year")
+    )
+    fig.update_yaxes(title_text='Number of Teams')
+    fig.update_xaxes(title_text='Year')
     fig.update_traces(
         hovertemplate="<br>".join([
-            "Year: %{x}",
-            "Num of Teams: %{y}<extra></extra>",
-        ])
+            "<b>%{y}</b><extra></extra>",
+        ]),
+        hoverlabel = f1db_utils.getHoverlabel(13)
     )
 
-    utility.figDesign(fig, "Total teams for year")
 
     return fig
 
 def createCostructorGeo():
     [df1, df2] = getGeoData()
-    print(df2)
+    # print(df2)
 
     df = pd.DataFrame(columns=['Teams', 'Country', 'Continent','code'])
     for index, value in df1['fullName'].items():
         
-        countrieId = df1["countryId"][index]
+        countryId = df1["countryId"][index]
         
-        alpha3Code = df2.loc[df2['id'] == countrieId, "alpha3Code"]
-        continent = df2.loc[df2['id'] == countrieId, "continentId"]
+        alpha3Code = df2.loc[df2['id'] == countryId, "alpha3Code"]
+        continent = df2.loc[df2['id'] == countryId, "continentId"]
         if not alpha3Code.empty:
             if not continent.empty:
                 continent = continent.iloc[0]
                 alpha3Code = alpha3Code.iloc[0]
-                df = df._append({'Teams': value, 'Country':countrieId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
+                df = df._append({'Teams': value, 'Country':countryId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
 
     df_grouped = df.groupby(['code', 'Country']).agg({'Continent': 'first','Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
-    print(df_grouped)
+    
+    df_countries = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.countries}")
+    df_countries.rename(columns={"id":"Country", "name":"countryName"}, inplace=True)
+    df_countries.drop(columns=df_countries.columns.difference(["Country", "countryName", "continentId"]), inplace=True)
+    df_grouped = pd.merge(df_grouped, df_countries, on="Country", how="left")
+    
+    df_continents = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.continents}")
+    df_continents.rename(columns={"id":"continentId", "name":"continentName"}, inplace=True)
+    df_continents.drop(columns=df_continents.columns.difference(["continentId", "continentName"]), inplace=True)
+    df_grouped = pd.merge(df_grouped, df_continents, on="continentId", how="left")
+    # print(df_grouped.head())
 
     # Creare il plot
     # TODO => manca la size in funzione della quantità di teams in quella nazione
     fig = px.scatter_geo(
         df_grouped, 
         locations='code', 
-        color='Continent', 
-        hover_name='Country', 
+        color='continentName', 
+        labels=labels_dict,
+        hover_name='countryName', 
         hover_data={'Teams': True, 'code': False}, 
-        height=400
-    )
-
-    utility.figDesign(fig, "Constructor Position")
-
-    fig.update_geos(
-        bgcolor="rgba(0,0,0,0)",
-        showland=True, 
-        landcolor="rgb(200,212,227)",
-        projection_type='orthographic',
-        showcoastlines=True,
-        resolution=110
-    ),
+        template = f1db_utils.template,
+        color_discrete_map = {
+            'Africa': "rgb(99, 110, 250)", 
+            'Antarctica': "rgb(239, 85, 59)", 
+            'Asia': "rgb(0, 204, 150)", 
+            "Europe": "rgb(247,1,0)",
+            'Australia': "rgb(171, 99, 250)", 
+            'North America': "rgb(25, 211, 243)", 
+            'South America': "rgb(254, 203, 82)"
+        },
+        category_orders = f1db_utils.continents_order,
+    ).update_layout(
+        f1db_utils.transparent_bg,
+        title = f1db_utils.getTitleObj("Spread of Teams Around the World"),
+    ).update_traces(
+        hoverlabel=f1db_utils.getHoverlabel(13)
+    ).update_geos(f1db_utils.update_geos)
     
     return fig
 
 def createConstructorTrend(graph_info, teamName):
+    if not teamName: return f1db_utils.warning_empty_dataframe
+    
     df = getTeamsData()
     if isinstance(teamName, str):
         teamName = [teamName]
-    df = df.loc[df['fullName'].isin(teamName)]
+    df = df.loc[df['id'].isin(teamName)]
+    
     match graph_info:
         case 'win':
             df2 = getExtraTeamData()
@@ -286,21 +327,29 @@ def createConstructorTrend(graph_info, teamName):
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             
-            df2 = f1db_utils.order_df(df2, "constructorId", teamName)
+            df.rename(columns={"id":"constructorId"}, inplace=True)
+            df2 = pd.merge(df2, df, on="constructorId", how="left")
             
+            df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
-                          x='year', 
-                          y='RowNumber', 
-                          color='constructorId', 
-                          color_discrete_sequence=f1db_utils.custom_colors, 
-                          markers=True)
+                x='year', 
+                y='RowNumber', 
+                color='fullName', 
+                color_discrete_sequence=f1db_utils.custom_colors, 
+                markers=True,
+                template=f1db_utils.template,
+                labels=labels_dict,
+                hover_data = {
+                    "fullName": True
+                }
+            ).update_layout(hovermode="x")
             fig.update_yaxes(title_text='# Championship Win')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
-                 hovertemplate="<br>".join([
-                    "Date: %{x}",
-                    "Total Championship Win: %{y}<extra></extra>",
-                ])
+                hovertemplate="<br>".join([
+                    "<b>%{customdata}</b> (<b>%{y})</b><extra></extra>",
+                ]),
+                hoverlabel = f1db_utils.getHoverlabel(13)
              )
 
         case 'win race':
@@ -308,22 +357,31 @@ def createConstructorTrend(graph_info, teamName):
             df2 = df2[df2['constructorId'].isin(df['id'])]
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            
+            df.rename(columns={"id":"constructorId"}, inplace=True)
+            df2 = pd.merge(df2, df, on="constructorId", how="left")
+            
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
             df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
-                          x='date', 
-                          y='RowNumber', 
-                          color='constructorId', 
-                          color_discrete_sequence=f1db_utils.custom_colors,
-                          markers=True)
+                x='date', 
+                y='RowNumber', 
+                color='fullName', 
+                color_discrete_sequence=f1db_utils.custom_colors,
+                markers=True,
+                template=f1db_utils.template,
+                labels=labels_dict,
+                hover_data = {
+                    "fullName": True
+                }).update_layout(hovermode="x")
             fig.update_yaxes(title_text='# Race Win')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
-                 hovertemplate="<br>".join([
-                    "Date: %{x}",
-                    "Total Race Win: %{y}<extra></extra>",
-                ])
+                hovertemplate="<br>".join([
+                    "<b>%{customdata}</b> (<b>%{y})</b><extra></extra>",
+                ]),
+                hoverlabel = f1db_utils.getHoverlabel(13)
              )
         
         case 'podiums':
@@ -331,24 +389,33 @@ def createConstructorTrend(graph_info, teamName):
             df2 = df2[df2['constructorId'].isin(df['id'])]
             df2 =df2.loc[(df2['positionNumber'] == 1) | (df2['positionNumber'] == 2) | (df2['positionNumber'] == 3)].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
+            
+            df.rename(columns={"id":"constructorId"}, inplace=True)
+            df2 = pd.merge(df2, df, on="constructorId", how="left")
+            
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
 
             #print(df2)
             df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
-                          x='date', 
-                          y='RowNumber', 
-                          color='constructorId', 
-                          color_discrete_sequence=f1db_utils.custom_colors,
-                          markers=True)
+                x='date', 
+                y='RowNumber', 
+                color='fullName', 
+                color_discrete_sequence=f1db_utils.custom_colors,
+                markers=True,
+                template=f1db_utils.template,
+                labels=labels_dict,
+                hover_data = {
+                    "fullName": True
+                }).update_layout(hovermode="x")
             fig.update_yaxes(title_text='# Podiums')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(
-                 hovertemplate="<br>".join([
-                    "Date: %{x}",
-                    "Total Podiums: %{y}<extra></extra>",
-                ])
+                hovertemplate="<br>".join([
+                    "<b>%{customdata}</b> (<b>%{y})</b><extra></extra>",
+                ]),
+                hoverlabel = f1db_utils.getHoverlabel(13)
              )
 
     

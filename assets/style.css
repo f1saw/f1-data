@@ -9,6 +9,7 @@ H1{
 /* input box */
 .Select-control {
     background-color: white;
+    min-width: 15vw;
     max-width: 31vw;
     max-height: 12vh;
 }

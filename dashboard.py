@@ -1,3 +1,7 @@
+# File      BACKEND | DASHBOARD
+# Authors   Matteo Naccarato 
+#           Maurizio Meschi
+
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
@@ -24,7 +28,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callb
 
 # TABS STRUCTURE
 tabs = ["seasons", "circuits", "drivers", "teams"]
-STARTING_TAB = 1
+STARTING_TAB = 0
 tabs_children = []
 for idx, tab in enumerate(tabs):
     tabs_children.append(dcc.Tab(
@@ -66,15 +70,15 @@ def render_content(tab):
             return html.Div([
                 html.Hr(),
                 dbc.Row([
-                    dbc.Col(dcc.Graph(id="season_GP_graph", figure=seasons.createSeason_GP_Plot())),
-                    dbc.Col(dcc.Graph(id="season_Geo_graph", figure=seasons.createSeasonGeo()))
+                    dbc.Col(dcc.Graph(id="season_GP_graph", figure=seasons.createSeason_GP_Plot()), width=6),
+                    dbc.Col(dcc.Graph(id="season_Geo_graph", figure=seasons.createSeasonGeo()), width=6)
                 ]),
                 html.Div(
                     seasons.crateDriverElement([1950, 1955]), # TODO => rimuovere questi parametri ??
                     id="range_div"
                 ),
                 dbc.Row(dbc.Col(dcc.Graph(id="season_graph")))
-            ], className="d-flex flex-column justify-content-between gap-2")
+            ], className="d-flex flex-column justify-content-between gap-2 container-fluid")
             
         # CIRCUITS
         case 'tab-1-circuits':
@@ -102,17 +106,11 @@ def render_content(tab):
                     dbc.Row([dbc.Col(circuits.circuits_dropdown, width=3)], className="d-flex justify-content-center"),
                     dcc.Graph(id='circuits-qualifying', figure=frontend.drivers.drivers_figures['numDriversPerYear'])
                 ])
-            ])
-            
-            
-            
-            
-            
+            ], className="container-fluid")
             
         # DRIVERS
         case 'tab-2-drivers':
             return html.Div([
-                # html.H3('Tab content 2'),
                 dbc.Row([
                     dbc.Col(dcc.Graph(id='drivers-line', figure=frontend.drivers.drivers_figures['numDriversPerYear']), width=6),
                     dbc.Col(dcc.Graph(id="drivers-world", figure=frontend.drivers.drivers_figures['worldSpread']), width=6)
@@ -139,13 +137,11 @@ def render_content(tab):
                                 ], id="drivers-min-value-id", width=12),
                                 dbc.Col(drivers.drivers_performance_dropdown, width=12, style={"max-width":"50px;"})
                             ])
-                        ], className="d-flex gap-4"), #direction="horizontal", gap=3)
-                        # dbc.Col([
-                        # ], width=4)
+                        ], className="d-flex gap-4"),
                     ]),
                     dcc.Graph(id="drivers-performance")
                 ])
-            ])
+            ], className="container-fluid")
             
             
             
@@ -154,44 +150,39 @@ def render_content(tab):
             return html.Div([
                 html.Hr(),
                 dbc.Row([
-                    dbc.Col(
-                        dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear())
-                    ),
-                    dbc.Col(
-                        dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo())
-                    )
+                    dbc.Col(dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear()), width=6),
+                    dbc.Col(dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo()), width=6)
                 ]),
                 html.Hr(),
-                dbc.Row([
-                    dbc.Col(
-                    dbc.Stack([
+                
+                
+                
+                dbc.Stack([
+                    dbc.Row([
+                        html.Div([
+                            html.Div([
                                 html.Label("Type of Graph"),
-                                teams.createRadioButtonGraph()
-                            ], direction="horizontal", gap=3),
-                    width=3),
-                    dbc.Col(
-                        teams.createDropdown(),
-                        width=6,
-                        id = "dropdown_col"
-                    ),
-                ]),
-                dbc.Row([
-                    dbc.Col(
-                        dbc.Stack([
-                                html.Label("Performance Type"),
-                                teams.createRadioButton(),
-                        ], direction="horizontal", gap=3),
-                        width=3),
-                    dbc.Col(
-                        teams.createSlider()
-                         #style={'marginRight': 30}
-                    )
-                ],style={'marginRight': 38, 'marginLeft': 42}),
-                dbc.Row(
-                    dbc.Col(
-                        dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
-                    )
-                )
+                                html.Label("Performance Type")
+                            ], className="d-flex flex-column px-5"),
+                            html.Div([
+                                teams.createRadioButtonGraph(),
+                                teams.createRadioButton()
+                            ], className="d-flex flex-column align-items-center"),
+                            html.Div([
+                                dbc.Col([
+                                    html.Div([
+                                        html.Label("==============", style={"color": "rgb(33,37,41)"}),
+                                        html.Label("Min Value"),
+                                        html.Label("==============", style={"color": "rgb(33,37,41)"})
+                                    ]),
+                                    teams.createSlider() 
+                                ], id="teams-min-value-id", width=12),
+                                dbc.Col(teams.createDropdown(), width=12, style={"max-width":"50px;"})
+                            ])
+                        ], className="d-flex gap-4"),
+                    ]),
+                    dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
+                ])
             ], className="container-fluid")
         
         # DEFAULTS
@@ -200,14 +191,12 @@ def render_content(tab):
         
 
 
-# =================1================= SEASONS
+# =================1================= SEASONS by Maurizio Meschi
 @callback([Output('dropdown_drivers', 'options'),
            Output('dropdown_drivers', 'value')],
                Input('range-slider', 'value'))
 def update_dropdown(slider_value):
         return [seasons.updateDropDownDrivers(slider_value), ['ayrton-senna', 'alain-prost']]
-
-
 
 @callback(Output('season_graph', 'figure'),
               [Input('radio-input', 'value'),
@@ -220,10 +209,19 @@ def update_graph(radio_value, range_value, driver, option):
         driver = [option[0]['value'], option[3]['value']]
     return seasons.createSeasonDriverPlot(radio_value, range_value, driver) 
  
-#### 
-# 
-#  CALLBACK TEAMS
-#   
+
+# =================4================= TEAMS by Maurizio Meschi 
+@app.callback(
+    [Output('dropdown', 'style'),
+     Output('teams-min-value-id', 'style')],
+    Input('radio-input-graph', 'value')
+)
+def toggle_teams_dropdown(selected_value):
+    if selected_value == "absolute":
+        return [{'display': 'none'},None]
+    else:
+        return [None,{'display': 'none'}]
+    
 @callback(Output('teams_graph', 'figure'),
              [Input('radio-input-teams', 'value'),
               Input('teams-slider', 'value'),
@@ -241,6 +239,9 @@ def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_va
             return teams.createRaceWinPlot(slider_value)
         else:
             return teams.createTotalPodiumPlot(slider_value)
+        
+# =================4================= 
+
 
 # TODO -> prendere dinamicamente i valori 16, 32 etc
 @app.callback(
@@ -272,7 +273,7 @@ def update_option_dropdown(slider_value, radio_value):
 
 
 
-# =================2================= CIRCUITS
+# =================2================= CIRCUITS by Matteo Naccarato
 circuits_vars = {
     "gp_held_max": 1,
     "quali_race_range_min": -10,
@@ -340,7 +341,7 @@ def circuits_update_quali_race(figure):
      Input("circuits-quali-race-range-id", "value")]
 )
 def circuits_update_quali_race(circuitsId, qualiRange):
-    if len(circuitsId) == 0: return f1db_utils.f1db_utils.warning_empty_dataframe
+    if len(circuitsId) == 0: return f1db_utils.warning_empty_dataframe
 
     global circuits_vars
     df = circuits.get_quali_race(circuitsId)
@@ -448,7 +449,7 @@ def circuits_update_qualifying(circuitsIds):
 
 
 
-# =================3================= DRIVERS
+# =================3================= DRIVERS by Matteo Naccarato
 # IF "absolute" graph => HIDE drivers dropdown | SHOW min value slider
 # IF "trend"    graph => SHOW drivers dropdown | HIDE min value slider
 @app.callback(

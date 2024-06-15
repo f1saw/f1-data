@@ -112,7 +112,6 @@ def getNumDriversPerYear():
 
 
 def getWorldSpread():
-    # TODO => fare tramite for
     df_drivers_entrants = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_entrants_drivers}")
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_countries = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.countries}")
