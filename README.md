@@ -4,13 +4,6 @@ https://github.com/f1db/f1db
 
 ### TODO | MATTE
 - [ ]         | FIX | Empty dataset warning
-- [ ]         | UI  | add drivers' flag on the top of the bar chart
-- [X] DRIVERS | UI  | drivers / trend => visualizzare nel dropdown solo piloti che hanno vinto mondiali o che hanno dati
-- [X] DRIVERS | UI  | show total podiums count in absolute graph
-- [X] DRIVERS | UI  | absolute => show only min value ; trend => show only select driver
-
-- [ ] how to put callbacks in different file
-
 
 ### ESPLOSIONI | MAURI
 - [ ] mismatch data in teams absolute/trend
