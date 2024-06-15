@@ -209,67 +209,7 @@ def update_graph(radio_value, range_value, driver, option):
         driver = [option[0]['value'], option[3]['value']]
     return seasons.createSeasonDriverPlot(radio_value, range_value, driver) 
  
-
-# =================4================= TEAMS by Maurizio Meschi 
-@app.callback(
-    [Output('dropdown', 'style'),
-     Output('teams-min-value-id', 'style')],
-    Input('radio-input-graph', 'value')
-)
-def toggle_teams_dropdown(selected_value):
-    if selected_value == "absolute":
-        return [{'display': 'none'},None]
-    else:
-        return [None,{'display': 'none'}]
-    
-@callback(Output('teams_graph', 'figure'),
-             [Input('radio-input-teams', 'value'),
-              Input('teams-slider', 'value'),
-              Input('radio-input-graph', 'value'),
-              Input('dropdown', 'value')])
-def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_value):
-    if (radio_graph_value == 'trend'):
-        return teams.createConstructorTrend(radio_value, dropdown_value)
-    else:
-        if (radio_value == 'win'):
-            return teams.createWinConstructorPlot(slider_value)
-        #elif(radio_value == "best race"):
-        #   return teams.createRaceConstructPlot(slider_value)
-        elif(radio_value == "win race"):
-            return teams.createRaceWinPlot(slider_value)
-        else:
-            return teams.createTotalPodiumPlot(slider_value)
-        
-# =================4================= 
-
-
-# TODO -> prendere dinamicamente i valori 16, 32 etc
-@app.callback(
-    [Output('teams-slider', 'max'),
-     Output('teams-slider', 'min'),
-     Output('teams-slider', 'marks'),
-     Output('teams-slider', 'value')],
-        Input('radio-input-teams', 'value'))
-def update_teams_slider(radio_input):
-    value = teams.updateSliderValue()
-    if (radio_input == "win"):
-        return value['win_max_slider'], 1, {0:"1", str(value['win_max_slider']):str(value['win_max_slider'])}, 1
-    elif(radio_input == "win race"):
-        return value['win_race_max_slider'], 1, {0:"1", str(value['win_race_max_slider']):str(value['win_race_max_slider'])}, 1
-    else:
-        return value['podiums_max_slider'], 1, {0:"1", str(value['podiums_max_slider']):str(value['podiums_max_slider'])}, 1
-
-
-@callback(Output('dropdown_col', 'children'),
-             [Input('teams-slider', 'value'),
-              Input('radio-input-teams', 'value')])
-def update_option_dropdown(slider_value, radio_value):
-    return teams.createDropdown(slider_value, radio_value)
-
 # =================1================= 
-
-
-
 
 
 
@@ -440,7 +380,7 @@ def circuits_update_qualifying(circuitsIds):
         )
     ).update_traces(
             hoverlabel = f1db_utils.getHoverlabel(14),
-            hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (%{x})<br><b>%{customdata[1]}</b>, <i>%{customdata[2]}</i><extra></extra>"])
+            hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (%{x})<br><b>%{customdata[1]}</b>, <i>%{customdata[2]}</i><br>%{customdata[3]}<extra></extra>"])
     ) if not df.empty else f1db_utils.warning_empty_dataframe
 
 # =================2=================
@@ -611,7 +551,61 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
 # =================3================= 
 
 
+# =================4================= TEAMS by Maurizio Meschi 
+@app.callback(
+    [Output('dropdown', 'style'),
+     Output('teams-min-value-id', 'style')],
+    Input('radio-input-graph', 'value')
+)
+def toggle_teams_dropdown(selected_value):
+    if selected_value == "absolute":
+        return [{'display': 'none'},None]
+    else:
+        return [None,{'display': 'none'}]
+    
+@callback(Output('teams_graph', 'figure'),
+             [Input('radio-input-teams', 'value'),
+              Input('teams-slider', 'value'),
+              Input('radio-input-graph', 'value'),
+              Input('dropdown', 'value')])
+def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_value):
+    if (radio_graph_value == 'trend'):
+        return teams.createConstructorTrend(radio_value, dropdown_value)
+    else:
+        if (radio_value == 'win'):
+            return teams.createWinConstructorPlot(slider_value)
+        #elif(radio_value == "best race"):
+        #   return teams.createRaceConstructPlot(slider_value)
+        elif(radio_value == "win race"):
+            return teams.createRaceWinPlot(slider_value)
+        else:
+            return teams.createTotalPodiumPlot(slider_value)
+        
 
+# TODO -> prendere dinamicamente i valori 16, 32 etc
+@app.callback(
+    [Output('teams-slider', 'max'),
+     Output('teams-slider', 'min'),
+     Output('teams-slider', 'marks'),
+     Output('teams-slider', 'value')],
+        Input('radio-input-teams', 'value'))
+def update_teams_slider(radio_input):
+    value = teams.updateSliderValue()
+    if (radio_input == "win"):
+        return value['win_max_slider'], 1, {0:"1", str(value['win_max_slider']):str(value['win_max_slider'])}, 1
+    elif(radio_input == "win race"):
+        return value['win_race_max_slider'], 1, {0:"1", str(value['win_race_max_slider']):str(value['win_race_max_slider'])}, 1
+    else:
+        return value['podiums_max_slider'], 1, {0:"1", str(value['podiums_max_slider']):str(value['podiums_max_slider'])}, 1
+
+
+@callback(Output('dropdown_col', 'children'),
+             [Input('teams-slider', 'value'),
+              Input('radio-input-teams', 'value')])
+def update_option_dropdown(slider_value, radio_value):
+    return teams.createDropdown(slider_value, radio_value)
+
+# =================4================= 
 
 
 
