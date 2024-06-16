@@ -3,6 +3,8 @@
 
 import pandas as pd
 import plotly.express as px
+from dash import dcc
+import dash_bootstrap_components as dbc
 
 import backend.f1db_utils as f1db_utils
 import backend.drivers as drivers
@@ -34,7 +36,7 @@ drivers.drivers_dfs["worldSpread"] = pd.merge(drivers.drivers_dfs["worldSpread"]
 drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
 drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
 
-# DRIVERs STATIC FIGURES
+# ====================DRIVERs STATIC FIGURES'=======================
 drivers_figures = {
     "numDriversPerYear" : px.line(
         drivers.drivers_dfs["numDriversPerYear"],
@@ -105,3 +107,51 @@ drivers_figures["worldSpread"].update_traces(
 for frame in drivers_figures["worldSpread"].frames:
     for data in frame.data:
         data.hovertemplate = CUSTOM_HOVERTEMPLATE
+        
+# ===========================================       
+        
+        
+# ===================UI========================    
+
+drivers_performance_type_graph_radio = dbc.RadioItems(
+    id="drivers-performance-type-graph-id",
+    options=[
+        {"label": "Absolute", "value": "absolute"},
+        {"label": "Drivers' Trend", "value": "trend"}
+    ],
+    value="absolute",
+    inline=True
+)
+
+drivers_performance_type_radio = dbc.RadioItems(
+    id="radio-drivers-performance-type-id",
+    options=[
+        {"label": "WDCs", "value": f1db_utils.PerformanceType.WDCS.value},
+        {"label": "Wins", "value": f1db_utils.PerformanceType.WINS.value},
+        {"label": "Podiums", "value": f1db_utils.PerformanceType.PODIUMS.value},
+        {"label": "Poles", "value": f1db_utils.PerformanceType.POLES.value}
+    ],
+    value=f1db_utils.PerformanceType.WDCS.value,
+    inline=True
+)
+
+drivers_performance_min_value = dcc.Slider(
+    id='drivers-performance-min-value-id',
+    min=1,
+    step=1,
+    value=0,
+    tooltip={"placement": "bottom", "always_visible": True}
+) 
+
+drivers_performance_dropdown = dcc.Dropdown(
+    id="drivers-performance-dropdown",
+    options=[{"label":row["driverName"], "value": row["driverId"]} for row in drivers.getDrivers(drivers.PERFORMANCE_TYPE_DEFAULT).to_dict(orient="records")],
+    placeholder="Select a Driver",
+    searchable=True,
+    clearable=False,
+    multi=True,
+    maxHeight=200,
+    value=["lewis-hamilton","max-verstappen","sebastian-vettel"] # TODO => look for something cool
+)    
+
+# ===========================================

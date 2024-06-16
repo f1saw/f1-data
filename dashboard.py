@@ -1,4 +1,4 @@
-# File      BACKEND | DASHBOARD
+# File      DASHBOARD
 # Authors   Matteo Naccarato 
 #           Maurizio Meschi
 
@@ -7,22 +7,19 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import numpy as np
-from datetime import datetime
 
 import frontend.drivers
+import frontend.circuits
 import backend.seasons as seasons
 import backend.drivers as drivers
 import backend.circuits as circuits
-import backend.f1db_utils as f1db_utils
 import backend.teams as teams
-
-# TODO chiamata a get-data.py (solo se passata più di una 5 giorni dall'ultima lettura (salvo su un file quando è stata fatta in millis) 
-# OPPURE fare ogni lunedì se non già fatto lo stesso giorno)
-# leggere da ./f1db-csv/
+import backend.f1db_utils as f1db_utils
+import get_data
 
 
-# TODO => do useful structure like tabs = ["seasons": [array_of_graphs], "circuits": [array_of_graphs], ...]
-
+# LOOK IF NEW DATA IS AVAILABLE
+get_data.get_data()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
@@ -42,9 +39,8 @@ for idx, tab in enumerate(tabs):
 # LAYOUT BUILDER
 app.layout = html.Div([
     html.H1([
-        html.Span('F1', style={'color': 'red'}), # TODO => il colore titolo sono confuso
+        html.Span('F1', style={'color': 'red'}), 
         html.Span('-DATA', style={'color': 'white'}),
-        #html.Span('A', style={'color': 'red'}),
     ],className="text-center fw-bold m-0 pt-2"),
     #html.Hr(),
     html.Div([
@@ -66,6 +62,7 @@ app.layout = html.Div([
             Input('tabs-graph', 'value'))
 def render_content(tab):
     match tab:
+        
         # SEASONS
         case 'tab-0-seasons':
             return html.Div([
@@ -85,6 +82,7 @@ def render_content(tab):
                 ], className="graph-section-seasons")
             ], className="d-flex flex-column justify-content-between gap-2 container-fluid")
             
+            
         # CIRCUITS
         case 'tab-1-circuits':
             return html.Div([
@@ -102,17 +100,18 @@ def render_content(tab):
                     dbc.Row([
                         dbc.Col([
                             dbc.Col(html.Label("Min Value"), width=3),
-                            dbc.Col(circuits.circuits_gp_held_min_value, width=9) 
+                            dbc.Col(frontend.circuits.circuits_gp_held_min_value, width=9) 
                         ], className="d-flex justify-content-center", width=2),
-                        dbc.Col(circuits.circuits_dropdown, width=4),
+                        dbc.Col(frontend.circuits.circuits_dropdown, width=4),
                         dbc.Col([
                             html.Label("Qualifying Position Range"),
-                            circuits.quali_race_range
+                            frontend.circuits.quali_race_range
                         ], width=6),    
                     ], className="d-flex justify-content-center"),
-                    dcc.Graph(id='circuits-qualifying', figure=frontend.drivers.drivers_figures['numDriversPerYear'], className="h-100")
+                    dcc.Graph(id='circuits-qualifying', className="h-100")
                 ], className="graph-section-circuits")
             ], className="container-fluid")
+         
             
         # DRIVERS
         case 'tab-2-drivers':
@@ -130,8 +129,8 @@ def render_content(tab):
                                 html.Label("Performance Type")
                             ], className="d-flex flex-column px-5"),
                             html.Div([
-                                drivers.drivers_performance_type_graph_radio,
-                                drivers.drivers_performance_type_radio
+                                frontend.drivers.drivers_performance_type_graph_radio,
+                                frontend.drivers.drivers_performance_type_radio
                             ], className="d-flex flex-column align-items-center"),
                             html.Div([
                                 dbc.Col([
@@ -140,9 +139,9 @@ def render_content(tab):
                                         html.Label("Min Value"),
                                         html.Label("==============", style={"color": "rgb(33,37,41)"})
                                     ]),
-                                    drivers.drivers_performance_min_value 
+                                    frontend.drivers.drivers_performance_min_value 
                                 ], id="drivers-min-value-id", width=12),
-                                dbc.Col(drivers.drivers_performance_dropdown, width=12, style={"max-width":"50px;"})
+                                dbc.Col(frontend.drivers.drivers_performance_dropdown, width=12, style={"max-width":"50px;"})
                             ])
                         ], className="d-flex gap-4"),
                     ]),
@@ -151,8 +150,7 @@ def render_content(tab):
                 ], className="graph-section-circuits")
             ], className="container-fluid")
             
-            
-            
+         
         # TEAMS
         case 'tab-3-teams':
             return html.Div([
@@ -341,7 +339,7 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     )
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
     
-    return fig if len(circuitsId) == 1 else f1db_utils.warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
+    return fig if len(circuitsId) == 1 else f1db_utils.warning_empty_dataframe 
 
 
 # BOTTOM GRAPH
@@ -434,7 +432,6 @@ def update_drivers_dropdown(performance_type):
      Input("drivers-performance-dropdown", "value")]
 )
 def update_drivers_performance(graph_type, performance_type, min_value, selected_drivers):
-    # print(f"{graph_type} {performance_type}")
     df = []
     hover_data = {}
     max_val = 0
@@ -462,14 +459,12 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 
             case f1db_utils.PerformanceType.PODIUMS.value:
                 df.sort_values(by=["count_podiums"], ascending=False, inplace=True)
-                y = ["count_position_1", "count_position_2", "count_position_3"] # with proper colors (gold, silver, bronze)
+                y = ["count_position_1", "count_position_2", "count_position_3"] 
                 drivers.labels_dict["count_position_1"] = "1°"
                 max_val = df["count_podiums"].max()
                 hover_data = { "count_podiums": True }
-                # df = df[["driverId", "driverName", "count_podiums", "count_position_3", "count_position_2", "count_position_1"]]
         
         x = "driverName"
-        # print(f"{min_value} {max_val}")
         if min_value <= max_val:
             fig = px.bar(df, 
                 x = x, 
@@ -490,7 +485,6 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 lambda t: t.update(name = drivers.labels_dict[t.name]) if t.name in drivers.labels_dict else None
             )
         
-            # print(df.head())
             if performance_type == f1db_utils.PerformanceType.PODIUMS.value:
                 fig.update_traces(
                     hoverlabel = f1db_utils.getHoverlabel(),
@@ -522,38 +516,33 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
         if performance_type != f1db_utils.PerformanceType.WDCS.value:
             hover_data["officialName"] = True
         
-        
-        
-        # Extend lines until current date
-        """if performance_type != f1db_utils.PerformanceType.WDCS.value:
-            print(df.head())
-            current_date = pd.to_datetime(datetime.now().strftime('%Y-%m-%d'))
-            last_date = df['date'].max()
-            print(last_date)"""
-        
         df = f1db_utils.order_df(df, "driverId", selected_drivers)
         
         show_gp_name = "%{customdata[1]}" if performance_type != f1db_utils.PerformanceType.WDCS.value else ""
-        return [px.line(
-            df,
-            x = drivers.performanceType2TimeAxis[performance_type], 
-            y = "progressiveCounter", 
-            color = "driverName",
-            markers = True,
-            labels = drivers.labels_dict,
-            hover_data = hover_data,
-            color_discrete_sequence=f1db_utils.custom_colors,
-            template = f1db_utils.template
-        ).update_layout(
-            f1db_utils.transparent_bg,
-            yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
-            title = f1db_utils.getTitleObj(f"{drivers.labels_dict[performance_type]} Trend"),
-            hovermode = "x",
-            margin=f1db_utils.margin
-        ).update_traces(
-            hoverlabel = f1db_utils.getHoverlabel(13),
-            hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (<b>%{y}</b>)<br>" + show_gp_name + "<extra></extra>"])
-        ) if not df.empty else f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
+        return [
+            px.line(
+                df,
+                x = drivers.performanceType2TimeAxis[performance_type], 
+                y = "progressiveCounter", 
+                color = "driverName",
+                markers = True,
+                labels = drivers.labels_dict,
+                hover_data = hover_data,
+                color_discrete_sequence=f1db_utils.custom_colors,
+                template = f1db_utils.template
+            ).update_layout(
+                f1db_utils.transparent_bg,
+                yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
+                title = f1db_utils.getTitleObj(f"{drivers.labels_dict[performance_type]} Trend"),
+                hovermode = "x",
+                margin=f1db_utils.margin
+            ).update_traces(
+                hoverlabel = f1db_utils.getHoverlabel(13),
+                hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (<b>%{y}</b>)<br>" + show_gp_name + "<extra></extra>"])
+            ) if not df.empty else f1db_utils.warning_empty_dataframe, 
+            max_val, 
+            { 1: "1", str(max_val): str(max_val) }
+        ]
 
     else:
         return [f1db_utils.warning_empty_dataframe, max_val, {1: "1", str(max_val): str(max_val)}]
@@ -590,7 +579,6 @@ def update_teams_graph(radio_value, slider_value, radio_graph_value, dropdown_va
             return teams.createTotalPodiumPlot(slider_value)
         
 
-# TODO -> prendere dinamicamente i valori 16, 32 etc
 @app.callback(
     [Output('teams-slider', 'max'),
      Output('teams-slider', 'min'),
@@ -615,8 +603,6 @@ def update_option_dropdown(slider_value, radio_value):
 
 # =================4================= 
 
-
-
       
 if __name__ == '__main__':
-    app.run(debug=True) # TODO => what does Debug=True do ??
+    app.run(debug=True) 
