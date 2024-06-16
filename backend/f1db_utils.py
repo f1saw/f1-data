@@ -47,6 +47,8 @@ transparent_bg = {
     "paper_bgcolor": "rgba(0,0,0,0)"
 }
 
+margin=dict(l=20, r=20, t=50, b=30)
+margin_geo=dict(t=60, b=0)
 
 # ===========================================
 
@@ -62,12 +64,14 @@ warning_empty_dataframe = {
         "xaxis": {"visible": False},
         "yaxis": {"visible": False},
         "annotations": [{
-            "text": "No matching data found",
+            "text": "<b>NO MATCHING DATA</b>",
             "xref": "paper",
             "yref": "paper",
             "showarrow": False,
-            "font": {"size": 28}
-        }]
+            "font": {"size": 28, "color": "rgb(254,241,2)"}
+        }],
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "paper_bgcolor": "rgba(0,0,0,0)"
     }
 }
 

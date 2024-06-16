@@ -238,7 +238,8 @@ def creteNumTeamsEntrantsForYear():
     ).update_layout(
         f1db_utils.transparent_bg,
         hovermode="x", 
-        title=f1db_utils.getTitleObj("Number of Teams Over the Year")
+        title=f1db_utils.getTitleObj("Number of Teams Over the Year"),
+        margin=f1db_utils.margin
     )
     fig.update_yaxes(title_text='Number of Teams')
     fig.update_xaxes(title_text='Year')
@@ -309,6 +310,7 @@ def createCostructorGeo():
     ).update_layout(
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Spread of Teams Around the World"),
+        margin=f1db_utils.margin_geo
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(13)
     ).update_geos(f1db_utils.update_geos).update_geos(resolution=110)
@@ -345,7 +347,7 @@ def createConstructorTrend(graph_info, teamName):
                 hover_data = {
                     "fullName": True
                 }
-            ).update_layout(hovermode="x", title=f1db_utils.getTitleObj("WCCs Trend"))
+            ).update_layout(hovermode="x", title=f1db_utils.getTitleObj("WCCs Trend"),margin=dict(b=60))
             fig.update_yaxes(title_text='Number of WCCs')
             fig.update_xaxes(title_text='Year')
             fig.update_traces(

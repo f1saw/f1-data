@@ -29,6 +29,15 @@ labels_dict = {
     "positionRace": "Race"
 }
 
+not_a_number_replace = {
+    'DNF': f1db_utils.INFINITE_RESULT, 
+    'DNS': f1db_utils.INFINITE_RESULT, 
+    "DSQ": f1db_utils.INFINITE_RESULT, 
+    "DNQ": f1db_utils.INFINITE_RESULT, 
+    "NC": f1db_utils.INFINITE_RESULT, 
+    "DNPQ": f1db_utils.INFINITE_RESULT, 
+    "EX": f1db_utils.INFINITE_RESULT
+}
 
 
 # FUNCTIONS
@@ -40,7 +49,7 @@ def getCircuits():
     df_countries.rename(columns={"id": "countryId", "name":"countryName"}, inplace=True)
     df_countries.drop(columns=df_countries.columns.difference(["countryId", "countryName", "alpha3Code"]), inplace=True)
     df = pd.merge(df, df_countries, on="countryId", how="left")
-    # print(df.head())
+    
     return df
 
 
@@ -58,13 +67,11 @@ def get_gp_held(minValue):
     df.reset_index(inplace=True)
     df.drop(columns=["index"], inplace=True)
     
-    #print(df.head())
     return df
 
 
 # UP-RIGHT GRAPH
 def get_quali_race(selected_circuits):
-    # print("==========================================")
     if len(selected_circuits) != 1: f1db_utils.warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
     
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.qualifying_results}")
@@ -78,7 +85,6 @@ def get_quali_race(selected_circuits):
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
-    # print(df_races_results.head())
     
     df_races = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.races}")
     df_races.rename(columns={"id":"raceId"}, inplace=True)
@@ -86,80 +92,22 @@ def get_quali_race(selected_circuits):
     df_races_circuits = pd.merge(df_races_results, df_races, on="raceId", how="left")
     selected_circuits_mask = df_races_circuits["circuitId"].isin(selected_circuits)
     df_races_circuits = df_races_circuits[selected_circuits_mask]
-    # print(df_races_circuits.head(10))
     
     df = pd.merge(df, df_races_circuits, on=["raceId","driverId"], how="right")
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
-    # df.drop(columns=["driverId"], inplace=True)
-    # df['positionQualifying'] = df['positionQualifying'].replace({'DNF': -1, 'DNS': -2, "DSQ": -3, "DNQ": -4, "NC": -5, "DNPQ": -6, "EX": -7}) # TODO => fare conversione in file a parte
-    
-    
-    # print(df.tail())
 
-
-
-    df['positionRace'] = df['positionRace'].replace({'DNF': -1, 'DNS': -2, "DSQ": -3, "DNQ": -4, "NC": -5, "DNPQ": -6, "EX": -7}) # TODO => fare conversione in file a parte
-    # df['positionRace'] = df['positionRace'].replace({'DNF': f1db_utils.INFINITE_RESULT, 'DNS': f1db_utils.INFINITE_RESULT, "DSQ": f1db_utils.INFINITE_RESULT, "DNQ": f1db_utils.INFINITE_RESULT, "NC": f1db_utils.INFINITE_RESULT, "DNPQ": f1db_utils.INFINITE_RESULT, "EX": f1db_utils.INFINITE_RESULT}) # TODO => fare conversione in file a parte
+    df['positionRace'] = df['positionRace'].replace(not_a_number_replace) 
     df['positionRace'] = pd.to_numeric(df['positionRace'], errors='coerce')
     df["positionRace"] = df["positionRace"].fillna(-10)
     df['positionRace'] = df['positionRace'].astype(int)
-    df = df[df["positionRace"] > 0]
-    
-    
-    
+    df = df[(df["positionRace"] > 0) & (df["positionRace"] < f1db_utils.INFINITE_RESULT - 1)]
 
-    df['positionQualifying'] = df['positionQualifying'].replace({'DNF': f1db_utils.INFINITE_RESULT, 'DNS': f1db_utils.INFINITE_RESULT, "DSQ": f1db_utils.INFINITE_RESULT, "DNQ": f1db_utils.INFINITE_RESULT, "NC": f1db_utils.INFINITE_RESULT, "DNPQ": f1db_utils.INFINITE_RESULT, "EX": f1db_utils.INFINITE_RESULT}) # TODO => fare conversione in file a parte
+    df['positionQualifying'] = df['positionQualifying'].replace(not_a_number_replace) 
     df["positionQualifying"] = df["positionQualifying"].fillna(f1db_utils.INFINITE_RESULT)
     df['positionQualifying'] = df['positionQualifying'].astype(int)
-    # print(df.sort_values(by="positionQualifying", ascending=False).head())
     max_quali_value = df[df["positionQualifying"] != f1db_utils.INFINITE_RESULT]["positionQualifying"].max()
-    
-    
-    df["positionQualifying"] = df["positionQualifying"].replace(f1db_utils.INFINITE_RESULT, max_quali_value+1)
-    # print(df.sort_values(by="positionQualifying", ascending=False).head())
-    
-    
-
-    # df['positionQualifying'] = df['positionQualifying'].replace({'DNF': f1db_utils.INFINITE_RESULT, 'DNS': f1db_utils.INFINITE_RESULT, "DSQ": f1db_utils.INFINITE_RESULT, "DNQ": f1db_utils.INFINITE_RESULT, "NC": f1db_utils.INFINITE_RESULT, "DNPQ": f1db_utils.INFINITE_RESULT, "EX": f1db_utils.INFINITE_RESULT}) # TODO => fare conversione in file a parte
-    # df['positionQualifying'] = pd.to_numeric(df['positionQualifying'], errors='coerce')
-    #df["positionQualifying"] = df["positionQualifying"].fillna(f1db_utils.INFINITE_RESULT)
-    #df['positionQualifying'] = df['positionQualifying'].astype(int)
-    # print(df[df['positionQualifying'].isna()])
-    
-    
-    
-    
-    
-    
-    
-    # df['positionQualifying'] = df['positionQualifying'].astype(int)
-    #print(f"AA - {df["positionQualifying"].max()}")
-    # m = int(df["positionQualifying"].max())
-    
-    
-    # print(df.sort_values(by="positionQualifying", ascending=False).head(20))
-    
-    # df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1]))))] # df["positionQualifying"].max()
-    
-    
-    
-    
-    
-    
-    
-    
-    # DROP useless data (negative values)
+    df["positionQualifying"] = df["positionQualifying"].replace(f1db_utils.INFINITE_RESULT, max_quali_value + 1)
     df = df[df["positionQualifying"] > 0]
-    
-    
-    
-    # df.sort_values(by="positionQualifying", inplace=True)
-    # df.reset_index(inplace=True)
-    # df.drop(columns=["index"], inplace=True)
-    # print(df.head())
-    # df_races
-    
-    
     
     return df
     
@@ -192,45 +140,4 @@ def get_qualifying_times(selected_circuits):
     
     df.drop(columns=df.columns.difference(["year", "driverId", "driverName", "time", "timeMillis", "circuitId", "circuitName", "grandPrixId", "officialName", "qualifyingFormat"]), inplace=True)
     
-    # print(df.tail())
     return df
-    
-    
-
-    
-    
-
-# UI
-circuits_gp_held_min_value = dcc.Slider(
-    id='circuits-gp-held-min-value-id',
-    min=1,
-    step=1,
-    value=0,
-    tooltip={"placement": "bottom", "always_visible": True}
-) 
-
-quali_race_range = dcc.RangeSlider(
-    id='circuits-quali-race-range-id',
-    min=0, 
-    max=20, 
-    step=1, 
-    value=[-f1db_utils.INFINITE_RESULT, f1db_utils.INFINITE_RESULT],
-    tooltip={"placement": "bottom", "always_visible": True}
-) 
-
-circuits_dropdown = dcc.Dropdown(
-    id="circuits-dropdown",
-    options=[{"label": f'{row["circuitName"]}, {row["countryName"]}', "value": row["circuitId"]} for row in getCircuits().to_dict(orient="records")],
-    placeholder="Select a Circuit",
-    searchable=True,
-    clearable=False,
-    multi=True,
-    maxHeight=200,
-    value=["monza"]#,"monaco", "austria"]
-    # value=["interlagos"]
-)
-
-
-circuits_dfs = {
-    
-}

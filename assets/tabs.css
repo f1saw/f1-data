@@ -16,12 +16,13 @@
     border-right: 0px !important;
     border-bottom: 0px !important;
     background-color: #fafbfc;
-    padding: 12px !important;
     font-family: "system-ui";
     font-weight: bold !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
+    padding-top: 15px !important;
+    padding-bottom: 0px !important;
 }
 
 .custom-tab--selected {
