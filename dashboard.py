@@ -180,7 +180,7 @@ def render_content(tab):
                                     ]),
                                     teams.createSlider() 
                                 ], id="teams-min-value-id", width=12),
-                                dbc.Col(teams.createDropdown(), width=12, style={"max-width":"50px;"})
+                                dbc.Col(teams.createDropdown(), id='dropdown_col', width=12, style={"max-width":"50px;"})
                             ])
                         ], className="d-flex gap-4"),
                     ]),
@@ -596,10 +596,9 @@ def update_teams_slider(radio_input):
 
 
 @callback(Output('dropdown_col', 'children'),
-             [Input('teams-slider', 'value'),
-              Input('radio-input-teams', 'value')])
-def update_option_dropdown(slider_value, radio_value):
-    return teams.createDropdown(slider_value, radio_value)
+              Input('radio-input-teams', 'value'))
+def update_option_dropdown(radio_value):
+    return teams.createDropdown(radio_value)
 
 # =================4================= 
 
