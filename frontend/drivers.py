@@ -56,7 +56,8 @@ drivers_figures = {
     .update_layout(
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Number of Official Drivers and Test Drivers Over the Years"),
-        hovermode = "x"
+        hovermode = "x",
+        margin=f1db_utils.margin
     ).update_traces(
         hoverlabel = f1db_utils.getHoverlabel(13),
         hovertemplate="<b>%{y}</b><extra></extra>"
@@ -91,7 +92,7 @@ drivers_figures = {
         template = f1db_utils.template
     ).update_layout(
         f1db_utils.transparent_bg,
-        height=500,
+        margin=f1db_utils.margin_geo,
         title = f1db_utils.getTitleObj("Spread of Drivers' Nationalities Over the Years"),
     ).update_geos(f1db_utils.update_geos)
 }

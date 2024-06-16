@@ -85,7 +85,8 @@ def createSeason_GP_Plot():
     ).update_layout(
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Number of GP Over the Years"),
-        hovermode = "x"
+        hovermode = "x",
+        margin=f1db_utils.margin
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(),
         hovertemplate="<br>".join(["<b>%{y}</b><extra></extra>"])
@@ -166,6 +167,7 @@ def createSeasonGeo():
     ).update_layout(
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Number of GP by Country"),
+        margin=f1db_utils.margin_geo
     ).update_geos(f1db_utils.update_geos).update_traces(hoverlabel = f1db_utils.getHoverlabel(14))
     
 
@@ -199,7 +201,8 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
     ).update_layout(
         f1db_utils.transparent_bg,
         hovermode = "x",
-        title = f1db_utils.getTitleObj(f"Drivers' {title} in WDCs")
+        title = f1db_utils.getTitleObj(f"Drivers' {title} in WDCs"),
+        margin=f1db_utils.margin
     )
     fig.update_xaxes(dtick=1, tickmode='linear')
     if (radio_button_value == "positionNumber"):
@@ -232,9 +235,10 @@ def createRadioButtonDriver():
             # Impostiamo il valore di default
             value="positionNumber",
             # inline = True mette i 3 bottoni in linea invece che verticale
-            inline=True,
+            #inline=True,
             id="radio-input",
-            style={'marginLeft': 7, 'marginTop': 10}
+            className="d-flex flex-column justify-content-start"
+            #style={'marginLeft': 7, 'marginTop': 10}
     )
 
 def createRangeSlider():
@@ -270,7 +274,7 @@ def createDropDownDrivers(slider_value=[1985, 1995]):
         #options = [{'label': value, 'value': value} for value in data_in_range ],
         multi=True,
         placeholder="Select a Driver",
-        style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'},
+        #style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'},
         value=['ayrton-senna', 'alain-prost']
     )
 
@@ -295,10 +299,9 @@ def updateDropDownDrivers(slider_value):
 def crateDriverElement(slider_value):
     if (slider_value is None):
         slider_value = [1985, 1995]
-    return html.Div([
-        dbc.Row(createRangeSlider()),
-        dbc.Row([
-            dbc.Col(createRadioButtonDriver(), className="col-3"), 
-            dbc.Col(createDropDownDrivers(slider_value), className="col-6")
-        ], style={'marginTop': 15}),
-    ])
+    return dbc.Row([
+        dbc.Col(createRangeSlider(), width=7),
+        dbc.Col(createDropDownDrivers(slider_value), width=4),
+        dbc.Col(createRadioButtonDriver(), width=1)
+    ], style={'marginTop': 0}),
+    

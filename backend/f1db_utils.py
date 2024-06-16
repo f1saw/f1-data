@@ -47,6 +47,8 @@ transparent_bg = {
     "paper_bgcolor": "rgba(0,0,0,0)"
 }
 
+margin=dict(l=20, r=20, t=50, b=30)
+margin_geo=dict(t=60, b=0)
 
 # ===========================================
 

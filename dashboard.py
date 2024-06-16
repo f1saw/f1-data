@@ -45,19 +45,20 @@ app.layout = html.Div([
         html.Span('F1', style={'color': 'red'}), # TODO => il colore titolo sono confuso
         html.Span('-DATA', style={'color': 'white'}),
         #html.Span('A', style={'color': 'red'}),
-    ],className="text-center fw-bold m-3"),
+    ],className="text-center fw-bold m-0 pt-2"),
+    #html.Hr(),
     html.Div([
         dcc.Tabs(id="tabs-graph", 
             value=tabs_children[STARTING_TAB].value, 
             children=tabs_children, 
-            parent_className='custom-tabs', className='pt-5 custom-tabs-container',
+            parent_className='custom-tabs', className='custom-tabs-container h-100',
             colors={
                 "border": "transparent",
                 "background": "rgb(33,37,41)"
             }),
         html.Div(id='tabs-content-graph')
-    ], className="d-flex flex-column-reverse justify-content-between"),
-], className="p-2 bg-dark vh-100") # overflow-hidden
+    ], className="d-flex flex-column-reverse justify-content-between vh-98"),
+], className="px-2 bg-dark vh-100") # overflow-hidden
 
 
 ## CALLBACKS
@@ -70,51 +71,57 @@ def render_content(tab):
             return html.Div([
                 html.Hr(),
                 dbc.Row([
-                    dbc.Col(dcc.Graph(id="season_GP_graph", figure=seasons.createSeason_GP_Plot()), width=6),
-                    dbc.Col(dcc.Graph(id="season_Geo_graph", figure=seasons.createSeasonGeo()), width=6)
-                ]),
-                html.Div(
-                    seasons.crateDriverElement([1950, 1955]), # TODO => rimuovere questi parametri ??
-                    id="range_div"
-                ),
-                dbc.Row(dbc.Col(dcc.Graph(id="season_graph")))
+                    dbc.Col(dcc.Graph(id="season_GP_graph", figure=seasons.createSeason_GP_Plot(), className="h-100"), width=6),
+                    dbc.Col(dcc.Graph(id="season_Geo_graph", figure=seasons.createSeasonGeo(), className="h-100"), width=6)
+                ], className="graph-section-seasons"),
+                html.Br(),
+                html.Br(),
+                dbc.Row([
+                    html.Div(
+                        seasons.crateDriverElement([1950, 1955]), # TODO => rimuovere questi parametri ??
+                        id="range_div"
+                    ),
+                    dbc.Row(dbc.Col(dcc.Graph(id="season_graph", className="h-100")))
+                ], className="graph-section-seasons")
             ], className="d-flex flex-column justify-content-between gap-2 container-fluid")
             
         # CIRCUITS
         case 'tab-1-circuits':
             return html.Div([
+                html.Hr(className="mb-0"),
                 dbc.Row([
                     dbc.Col(
                         dbc.Stack([
-                            dbc.Row([
-                                dbc.Col(html.Label("Min Value"), width=2),
-                                dbc.Col(circuits.circuits_gp_held_min_value, width=7) 
-                            ], className="d-flex justify-content-center"),
-                            dcc.Graph(id="circuits-gp-held")
-                        ]), width=6
-                    ), dbc.Col(
-                        dbc.Stack([ 
-                            dbc.Row([
-                                html.Label("Qualifying Position Range"),
-                                circuits.quali_race_range
-                            ]),
-                            dcc.Graph(id="circuits-quali-race-results")
-                        ]), width=6)
-                ]),
+                            dcc.Graph(id="circuits-gp-held", className="h-100")
+                    ], className="h-100"), width=6),
+                    dbc.Col(dcc.Graph(id="circuits-quali-race-results", className="h-100"), width=6)
+                ], className="graph-section-circuits"),
+                #html.Br(),
                 html.Br(),
                 dbc.Stack([
-                    dbc.Row([dbc.Col(circuits.circuits_dropdown, width=3)], className="d-flex justify-content-center"),
-                    dcc.Graph(id='circuits-qualifying', figure=frontend.drivers.drivers_figures['numDriversPerYear'])
-                ])
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Col(html.Label("Min Value"), width=3),
+                            dbc.Col(circuits.circuits_gp_held_min_value, width=9) 
+                        ], className="d-flex justify-content-center", width=2),
+                        dbc.Col(circuits.circuits_dropdown, width=4),
+                        dbc.Col([
+                            html.Label("Qualifying Position Range"),
+                            circuits.quali_race_range
+                        ], width=6),    
+                    ], className="d-flex justify-content-center"),
+                    dcc.Graph(id='circuits-qualifying', figure=frontend.drivers.drivers_figures['numDriversPerYear'], className="h-100")
+                ], className="graph-section-circuits")
             ], className="container-fluid")
             
         # DRIVERS
         case 'tab-2-drivers':
             return html.Div([
                 dbc.Row([
-                    dbc.Col(dcc.Graph(id='drivers-line', figure=frontend.drivers.drivers_figures['numDriversPerYear']), width=6),
-                    dbc.Col(dcc.Graph(id="drivers-world", figure=frontend.drivers.drivers_figures['worldSpread']), width=6)
-                ]),
+                    dbc.Col(dcc.Graph(id='drivers-line', figure=frontend.drivers.drivers_figures['numDriversPerYear'], className="h-100"), width=6),
+                    dbc.Col(dcc.Graph(id="drivers-world", figure=frontend.drivers.drivers_figures['worldSpread'], className="h-100"), width=6)
+                ], className="graph-section-circuits"),
+                html.Br(),
                 dbc.Stack([
                     dbc.Row([
                         html.Div([
@@ -139,8 +146,9 @@ def render_content(tab):
                             ])
                         ], className="d-flex gap-4"),
                     ]),
-                    dcc.Graph(id="drivers-performance")
-                ])
+                    dcc.Graph(id="drivers-performance", className="h-100"),
+                    html.Br()
+                ], className="graph-section-circuits")
             ], className="container-fluid")
             
             
@@ -148,15 +156,12 @@ def render_content(tab):
         # TEAMS
         case 'tab-3-teams':
             return html.Div([
-                html.Hr(),
+                #html.Hr(),
                 dbc.Row([
-                    dbc.Col(dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear()), width=6),
-                    dbc.Col(dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo()), width=6)
-                ]),
-                html.Hr(),
-                
-                
-                
+                    dbc.Col(dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear(), className="h-100"), width=6),
+                    dbc.Col(dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo(), className="h-100"), width=6)
+                ], className="graph-section-circuits"),
+                html.Br(),
                 dbc.Stack([
                     dbc.Row([
                         html.Div([
@@ -181,8 +186,8 @@ def render_content(tab):
                             ])
                         ], className="d-flex gap-4"),
                     ]),
-                    dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot())
-                ])
+                    dcc.Graph(id="teams_graph", figure=teams.createWinConstructorPlot(), className="h-100")
+                ], className="graph-section-circuits")
             ], className="container-fluid")
         
         # DEFAULTS
@@ -253,7 +258,8 @@ def circuits_update_gp_held(min_value):
     ).update_layout(
         f1db_utils.transparent_bg,
         title = f1db_utils.getTitleObj("Number GP Helds by Circuits"),
-        hovermode = "x"
+        hovermode = "x",
+        margin=f1db_utils.margin
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(),
         hovertemplate="<b>%{y}</b>, %{customdata[1]}<br>Type: %{customdata[2]}<extra></extra>"
@@ -324,7 +330,8 @@ def circuits_update_quali_race(circuitsId, qualiRange):
         xaxis = {
             'tickvals': tickvals, 
             'ticktext': ticktext  
-        }
+        },
+        margin=f1db_utils.margin
     ).update_traces(
         hovertemplate='Q: <b>%{x}</b><br>' + 
         'R: <b>%{y}</b><br>' + 
@@ -349,7 +356,7 @@ def circuits_update_qualifying(circuitsIds):
     df = circuits.get_qualifying_times(circuitsIds)
     df = f1db_utils.order_df(df, "circuitId", circuitsIds)
     
-    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=7, base=10)
+    tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=5, base=10)
     ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
     return px.line(
         df,
@@ -377,7 +384,8 @@ def circuits_update_qualifying(circuitsIds):
             ticktext=ticktext,
             tickmode='array',
             title="Lap Time"
-        )
+        ),
+        margin=f1db_utils.margin
     ).update_traces(
             hoverlabel = f1db_utils.getHoverlabel(14),
             hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (%{x})<br><b>%{customdata[1]}</b>, <i>%{customdata[2]}</i><br>%{customdata[3]}<extra></extra>"])
@@ -476,7 +484,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 f1db_utils.transparent_bg,
                 title = f1db_utils.getTitleObj(title),
                 hovermode="x",
-                showlegend=True
+                showlegend=True,
+                margin=dict(t=20, b=20)
             ).for_each_trace(
                 lambda t: t.update(name = drivers.labels_dict[t.name]) if t.name in drivers.labels_dict else None
             )
@@ -539,7 +548,8 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
             f1db_utils.transparent_bg,
             yaxis = dict(tickmode="linear", dtick=1) if df["progressiveCounter"].max() < 10 else {},
             title = f1db_utils.getTitleObj(f"{drivers.labels_dict[performance_type]} Trend"),
-            hovermode = "x"
+            hovermode = "x",
+            margin=f1db_utils.margin
         ).update_traces(
             hoverlabel = f1db_utils.getHoverlabel(13),
             hovertemplate="<br>".join(["<b>%{customdata[0]}</b> (<b>%{y}</b>)<br>" + show_gp_name + "<extra></extra>"])

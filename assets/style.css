@@ -1,52 +1,75 @@
 * {
-    color: white
+    color: white;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
 }
 
-H1{
+.graph-section-seasons {
+    height: 35vh;
+}
+
+.graph-section-circuits {
+    height: 40vh;
+}
+
+H1 {
     color: red
 }
 
+
 /* input box */
+
 .Select-control {
     background-color: white;
     min-width: 15vw;
     max-width: 31vw;
     max-height: 12vh;
 }
- 
+
+
 /* changes the text color of input box */
+
 .Select-value-label {
-    color: rgb(33,37,41) !important;
+    color: rgb(33, 37, 41) !important;
 }
- 
-.Select--single > .Select-control .Select-value, .Select-placeholder {
+
+.Select--single>.Select-control .Select-value,
+.Select-placeholder {
     border: 1px solid grey;
     border-radius: 4px;
 }
- 
- 
+
+
 /* dropdown menu options */
+
 .VirtualizedSelectOption {
     background-color: white;
-    color: rgb(33,37,41);
- }
- 
- 
+    color: rgb(33, 37, 41);
+}
+
+
 /* dropdown menu hover effect */
+
 .VirtualizedSelectFocusedOption {
     background-color: white;
     opacity: .7;
 }
- 
+
+
 /* border on focus - default is blue
  * shadow box around input box.  default is blue
  */
-.is-focused:not(.is-open) > .Select-control {
-  border-color: var(--primary);
-  box-shadow: none;
+
+.is-focused:not(.is-open)>.Select-control {
+    border-color: var(--primary);
+    box-shadow: none;
 }
- 
+
+
 /* this colors the input box text and x of multi dropdown*/
+
 .Select--multi .Select-value {
-  color: white;
+    color: white;
 }
