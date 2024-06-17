@@ -8,6 +8,11 @@ from dash import Dash, dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import numpy as np
 
+import get_data
+
+# LOOK IF NEW DATA IS AVAILABLE
+get_data.get_data()
+
 import frontend.drivers
 import frontend.circuits
 import backend.seasons as seasons
@@ -15,11 +20,6 @@ import backend.drivers as drivers
 import backend.circuits as circuits
 import backend.teams as teams
 import backend.f1db_utils as f1db_utils
-import get_data
-
-
-# LOOK IF NEW DATA IS AVAILABLE
-get_data.get_data()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
