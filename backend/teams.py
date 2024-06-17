@@ -283,9 +283,7 @@ def createCostructorGeo():
 
     df = pd.DataFrame(columns=['Teams', 'Country', 'Continent','code'])
     for index, value in df1['fullName'].items():
-        
         countryId = df1["countryId"][index]
-        
         alpha3Code = df2.loc[df2['id'] == countryId, "alpha3Code"]
         continent = df2.loc[df2['id'] == countryId, "continentId"]
         if not alpha3Code.empty:
@@ -296,19 +294,29 @@ def createCostructorGeo():
 
     df_count = df['Country'].value_counts().reset_index()
     df_count.columns = ['Country', 'count']
-    df_grouped = df.groupby(['Country']).agg({'code': 'first', 'Continent': 'first','Teams': lambda x: '<br> '.join(map(str, x))}).reset_index()
+    
+    def format_team_info(team_info):
+        max_display = 15
+        if len(team_info) > max_display:
+            return '<br>'.join([f"{item['Teams']}" for item in team_info[:max_display]]) + f'<br><i>and {len(team_info) - max_display} more</i><extra></extra>'
+        else:
+            return '<br>'.join([f"{item['Teams']}" for item in team_info]) + '<extra></extra>'
+    
+    df_grouped = df.groupby(['Country']).apply(
+        lambda x: [{'Teams': row['Teams']} for idx, row in x.iterrows()]
+    ).reset_index(name='Teams')
+    df_grouped["Teams"] = df_grouped["Teams"].apply(format_team_info)
     df_grouped = df_grouped.merge(df_count, on='Country', how='left')
 
     df_countries = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.countries}")
-    df_countries.rename(columns={"id":"Country", "name":"countryName"}, inplace=True)
-    df_countries.drop(columns=df_countries.columns.difference(["Country", "countryName", "continentId"]), inplace=True)
+    df_countries.rename(columns={"id":"Country", "name":"countryName", "alpha3Code": "code"}, inplace=True)
+    df_countries.drop(columns=df_countries.columns.difference(["Country", "countryName", "continentId", "code"]), inplace=True)
     df_grouped = pd.merge(df_grouped, df_countries, on="Country", how="left")
     
     df_continents = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.continents}")
     df_continents.rename(columns={"id":"continentId", "name":"continentName"}, inplace=True)
     df_continents.drop(columns=df_continents.columns.difference(["continentId", "continentName"]), inplace=True)
     df_grouped = pd.merge(df_grouped, df_continents, on="continentId", how="left")
-    # print(df_grouped.head())
 
     # Creare il plot
     # TODO => manca la size in funzione della quantità di teams in quella nazione
