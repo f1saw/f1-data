@@ -12,7 +12,7 @@ COL_TO_APPLY_MIN_DEFAULT = "count_position_1"
 PERFORMANCE_TYPE_DEFAULT = f1db_utils.PerformanceType.WDCS.value
 
 
-# DICT
+# LABELS DICT
 labels_dict = {
     "driverId": "Driver",
     "driverName": "Driver",
@@ -55,6 +55,8 @@ driver_type = {
     "testDriver": "Test Driver"
 }
 
+
+# @returns -> proper dataframe mask based on {performanceType}
 def performanceType2Mask(df, performanceType):
     match performanceType:
         case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value: 
@@ -63,10 +65,12 @@ def performanceType2Mask(df, performanceType):
             return (df["positionNumber"] <= 3.0) 
 
 
+# @returns -> drivers dataframe. 
+#               {filterFlag} is used to return drivers who achieved at least one positive result in performance (e.g. WDCs, Wins, ...)
 def getDrivers(filterFlag = None):
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
-    df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True) # TODO => al più nazionalità
+    df.drop(columns=df.columns.difference(["driverId", "driverName"]), inplace=True)
     
     if filterFlag is not None: # e.g. WDCs => return only drivers who have won at least one WDCs
         df = getTrendPerformance(df["driverId"].to_numpy(), filterFlag)
@@ -75,7 +79,8 @@ def getDrivers(filterFlag = None):
     
     return df
     
-
+    
+# @returns -> dataframe with number of official and test drivers over the years
 def getNumDriversPerYear():
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_entrants_drivers}")
     df.drop(columns=["entrantId","constructorId","engineManufacturerId","rounds","roundsText"], inplace=True)
@@ -92,6 +97,7 @@ def getNumDriversPerYear():
     return pd.merge(df_by_year, df_test_drivers_by_year, on="year", how="outer")
 
 
+# @returns -> dataframe with drivers evolution by country and over the years
 def getWorldSpread():
     df_drivers_entrants = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_entrants_drivers}")
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
@@ -119,6 +125,7 @@ def getWorldSpread():
     return df_merged
 
 
+# @returns -> drivers dataframe with their absolute count of performance achievements (WDCs, Wins, Podiums, Poles)
 def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     df = pd.read_csv(f"{f1db_utils.folder}/{performanceType2file[performanceType]}")
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
@@ -126,20 +133,23 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
     df.drop(columns=df.columns.difference(["positionNumber","driverId","year"]), inplace=True)
     
+    # 
     match performanceType:
-        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value:
+        # 1st, 2nd, 3rd places only
+        case f1db_utils.PerformanceType.PODIUMS.value:
             podium_mask = (df["positionNumber"] == 1) | (df["positionNumber"] == 2) | (df["positionNumber"] == 3)
             df = df[podium_mask]
             for place in [1,2,3]:
-                df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum())
-            df["count_podiums"] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x <= 3.0).sum())
+                df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum()) # count P1,P2,P3
+            df["count_podiums"] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x <= 3.0).sum()) # count podiums
             df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
             df.drop_duplicates(subset=["driverId","count_position_1","count_position_2","count_position_2"], inplace=True)
-        
-        case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.POLES.value:
+            
+        # 1st place only
+        case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.POLES.value:
             df = df[f1db_utils.get_p1_mask(df, performanceType)]
             for place in [1]:
-                df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum())
+                df[f'count_position_{place}'] = df.groupby('driverId')['positionNumber'].transform(lambda x: (x == place*1.0).sum()) # count P1
             df.sort_values(by=["count_position_1"], inplace=True, ascending=False)
             df.drop_duplicates(subset=["driverId","count_position_1"], inplace=True)
        
@@ -165,37 +175,43 @@ def count_p1(row):
         counter[row["driverId"]] += 1
     return counter[row["driverId"]]
 
+# Progressive counter like the one above
 def count_podiums(row):
     global counter
     if row["positionNumber"] <= 3.0:
         counter[row["driverId"]] += 1
     return counter[row["driverId"]] 
 
+
+# @returns -> drivers dataframe (filtered by {selected_drivers}) with their trend count of performance achievements (WDCs, Wins, Podiums, Poles)
 def getTrendPerformance(selected_drivers, performanceType):
     df = pd.read_csv(f"{f1db_utils.folder}/{performanceType2file[performanceType]}")
     df_drivers_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.drivers_info}")
     df_drivers_info.rename(columns={"id":"driverId", "name":"driverName"}, inplace=True)
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
     
+    # Drivers filter by {selected_drivers}
     selected_drivers_mask = df["driverId"].isin(selected_drivers) 
     df = df[selected_drivers_mask]
-    if performanceType == f1db_utils.PerformanceType.WDCS.value: # show only when he achieved the result as a marker (if it is not a WDC)
+    if performanceType == f1db_utils.PerformanceType.WDCS.value: 
         df = df[f1db_utils.currentSeasonCheckMask(df, performanceType)]
     else:
-        df = df[performanceType2Mask(df, performanceType)]
+        df = df[performanceType2Mask(df, performanceType)] # show the marker only when he achieved the result 
         
     df.reset_index(inplace=True)
     match performanceType:
         case f1db_utils.PerformanceType.WDCS.value:
             df.drop(columns=["index","positionDisplayOrder","positionText","points"], inplace=True)
         
+        # Get races info
         case f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.PODIUMS.value | f1db_utils.PerformanceType.POLES.value:
             df.drop(columns=df.columns.difference(["raceId","driverId","positionNumber"]), inplace=True)
             df_races = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.races}")
             df_races.rename(columns={"id":"raceId"}, inplace=True)
             df_races.drop(columns=df_races.columns.difference(["raceId","date","grandPrixId","officialName","circuitId"]), inplace=True)
             df = pd.merge(df, df_races, on="raceId", how="left")
-            
+    
+    # Progressive counter of drivers' achievements        
     for driver_id in selected_drivers:
         counter[driver_id] = 0
     df["progressiveCounter"] = df.apply(count_p1 if performanceType != f1db_utils.PerformanceType.PODIUMS.value else count_podiums, axis=1)
@@ -204,7 +220,8 @@ def getTrendPerformance(selected_drivers, performanceType):
     return df
 
 
-drivers_dfs = {
+# Default Drivers DataFrames
+dfs = {
     "numDriversPerYear": getNumDriversPerYear(),
     "worldSpread": getWorldSpread(),
     "absolutePerformance": getAbsolutePerformance(PERFORMANCE_TYPE_DEFAULT, MIN_VALUE_DEFAULT, COL_TO_APPLY_MIN_DEFAULT)

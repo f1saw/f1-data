@@ -16,24 +16,25 @@ labels_dict = {
     "continentName": "Continent"
 }
 
+# Get constructors data
 def getTeamsData():
     current_path = os.path.abspath(__file__)
     directory_path = os.path.dirname(current_path)
 
-    df_list = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-constructors.csv')
-    #print(df_list)
+    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-constructors.csv')
     
-    return df_list
+    return df
 
+# Get entrants constructors data for season
 def getEntrantsTeamsData():
     current_path = os.path.abspath(__file__)
     directory_path = os.path.dirname(current_path)
 
-    df_list = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-seasons-entrants-constructors.csv')
-    #print(df_list)
-    
-    return df_list
+    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-seasons-entrants-constructors.csv')
+        
+    return df
 
+# Get countries data
 def getGeoData():
     df1 = getTeamsData()
     current_path = os.path.abspath(__file__)
@@ -43,15 +44,16 @@ def getGeoData():
 
     return [df1,df2]
 
+# Get seasons constructor standings data
 def getExtraTeamData():
     current_path = os.path.abspath(__file__)
     directory_path = os.path.dirname(current_path)
 
-    #df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-seasons-constructor-standings.csv')
-    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-races-race-results.csv')
+    df = pd.read_csv(directory_path + "/../f1db-csv/" + 'f1db-seasons-constructor-standings.csv')
 
     return df
 
+# Get races data
 def getRaceTeamsData():
     current_path = os.path.abspath(__file__)
     directory_path = os.path.dirname(current_path)
@@ -62,37 +64,32 @@ def getRaceTeamsData():
     return [df,df2]
 
 
+# Create radio buttons to display WCCs, wins, podiums
 def createRadioButton():
     return dbc.RadioItems(
-                      # Sono le 3 opzioni
                       options=[
-                          {"label":"WCCs", "value":"win"}, # opzione boxplot
-                          #{"label":"Best Race Result", "value":"best race"},
+                          {"label":"WCCs", "value":"win"}, 
                           {"label":"Wins", "value":"win race"},
                           {"label":"Podiums", "value":"podiums"}
                       ],
-                      # Impostiamo il valore di default
                       value="win",
-                      # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
                       id="radio-input-teams"
                 )
 
+# Create radio buttons to display absolute or Constructor's Trend
 def createRadioButtonGraph():
     return dbc.RadioItems(
-                      # Sono le 3 opzioni
                       options=[
-                          {"label":"Absolute", "value":"absolute"}, # opzione boxplot
-                          #{"label":"Best Race Result", "value":"best race"},
+                          {"label":"Absolute", "value":"absolute"},
                           {"label":"Constructor's Trend", "value":"trend"}
                       ],
-                      # Impostiamo il valore di default
                       value="absolute",
-                      # inline = True mette i 3 bottoni in linea invece che verticale
                       inline=True,
                       id="radio-input-graph",
                 )
 
+# Create the dropdown to choose the Teams on which to view the information
 def createDropdown(radio_value = 'win'):
     df = getTeamsData()
     if (radio_value == 'win'):
@@ -107,13 +104,13 @@ def createDropdown(radio_value = 'win'):
         
     return dcc.Dropdown(
         id='dropdown',
-        # options = [{'label': value, 'value': value} for index,value in df['fullName'].items() ],
         options=[{"label":row["fullName"], "value": row["id"]} for row in df.to_dict(orient="records")],
         value=df['id'].iloc[0],
         multi=True,
         style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
     )
 
+# Crate slider with default value
 def createSlider():
     return dcc.Slider(
         id='teams-slider',
@@ -124,6 +121,7 @@ def createSlider():
         marks={i: str(i) for i in range(32)},
     )
 
+# Crate slider value
 def updateSliderValue():
     SliderValue = {
         "win_max_slider": 0,
@@ -134,12 +132,10 @@ def updateSliderValue():
     df.sort_values(by='totalChampionshipWins', ascending=False, inplace=True)
     SliderValue['win_max_slider'] = df['totalChampionshipWins'].max()
 
-    df = getTeamsData()
+    #df = getTeamsData()
     df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
     SliderValue['win_race_max_slider'] = df['totalRaceWins'].max()
 
-    #df = getTeamsData()
-    #df.sort_values(by='totalPodiums', ascending=False, inplace=True)
     [df2, df3] = getRaceTeamsData()
     df2 =df2.loc[(df2['positionNumber'] == 1) | (df2['positionNumber'] == 2) | (df2['positionNumber'] == 3)].reset_index()
     df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
@@ -152,11 +148,14 @@ def updateSliderValue():
     return SliderValue
 
 
-def createWinConstructorPlot(min_value = 0):
+# Create the bar char to display WCCs
+def createWinConstructorPlot(min_value = 1):
     df = getTeamsData()
     df.sort_values(by='totalChampionshipWins', ascending=False, inplace=True)
+    # Set default value
     if (min_value is None):
         min_value = 1
+    # Extract only the teams that have won x championships
     df = df.loc[df['totalChampionshipWins'] >= min_value]
     fig = px.bar(df, x='fullName', y='totalChampionshipWins', 
                 color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
@@ -177,17 +176,19 @@ def createWinConstructorPlot(min_value = 0):
     )
     return fig
 
-
+# Create the bar char to display win races
 def createRaceWinPlot(min_value = 0):
     df = getTeamsData()
     df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
+    # Set default value
     if (min_value is None):
         min_value = 1
+        # Extract only the teams that have won x race
     df = df.loc[df['totalRaceWins'] >= min_value]
     
     fig = px.bar(df, x='fullName', y='totalRaceWins',
                 color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df),
-                color_discrete_map=f1db_utils.podium_colors,
+                color_discrete_map = f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
                 template=f1db_utils.template
     ).update_layout(
@@ -204,11 +205,12 @@ def createRaceWinPlot(min_value = 0):
     )
     return fig
 
+# Create the bar char to display total podiums
 def createTotalPodiumPlot(min_value = 1):
     [df2, df3] = getRaceTeamsData()
+    # Get only the teams that finished first, second or third in the race
     df2 =df2.loc[(df2['positionNumber'] == 1) | (df2['positionNumber'] == 2) | (df2['positionNumber'] == 3)].reset_index()
     df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
-    
     df3 = df3[df3['id'].isin(df2['raceId'])]
     df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
     df2 = df2['constructorId'].value_counts().reset_index()
@@ -219,14 +221,8 @@ def createTotalPodiumPlot(min_value = 1):
     df_constructors_info.rename(columns={"id":"constructorId"}, inplace=True)
     df_constructors_info.drop(columns=df_constructors_info.columns.difference(["constructorId", "fullName"]), inplace=True)
     df2 = pd.merge(df2, df_constructors_info, on="constructorId", how="left")
-    """
-    df = getTeamsData()
-    df.sort_values(by='totalPodiums', ascending=False, inplace=True)
-    if (min_value is None):
-        min_value = 1
-    # print(min_value)
-    df = df.loc[df['totalPodiums'] >= min_value]
-    """
+    
+    # Create a bar chart
     fig = px.bar(df2, x='fullName', y='totalPodiums',
                 color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df2),
                 color_discrete_map=f1db_utils.podium_colors,
@@ -247,6 +243,7 @@ def createTotalPodiumPlot(min_value = 1):
     return fig
     
 
+# Create the bar char to display WCCs
 def creteNumTeamsEntrantsForYear():
     df = getEntrantsTeamsData()
     df = df['year'].value_counts().reset_index()
@@ -277,11 +274,14 @@ def creteNumTeamsEntrantsForYear():
 
     return fig
 
+# Create the scatter geo to display the distribution of Teams Around the World
 def createCostructorGeo():
     [df1, df2] = getGeoData()
-    # print(df2)
-
+  
+    # Create a new dataframe to store data of interest from different dfs
     df = pd.DataFrame(columns=['Teams', 'Country', 'Continent','code'])
+
+    # Storage country, alpha3Code and continent
     for index, value in df1['fullName'].items():
         countryId = df1["countryId"][index]
         alpha3Code = df2.loc[df2['id'] == countryId, "alpha3Code"]
@@ -290,8 +290,13 @@ def createCostructorGeo():
             if not continent.empty:
                 continent = continent.iloc[0]
                 alpha3Code = alpha3Code.iloc[0]
-                df = df._append({'Teams': value, 'Country': countryId, 'Continent': continent, 'code': alpha3Code}, ignore_index=True)
-
+                # Add the row to the new df
+                df = df._append({'Teams': value, 
+                                 'Country': countryId, 
+                                 'Continent': continent, 
+                                 'code': alpha3Code}, 
+                                 ignore_index=True)
+    
     df_count = df['Country'].value_counts().reset_index()
     df_count.columns = ['Country', 'count']
     
@@ -318,8 +323,6 @@ def createCostructorGeo():
     df_continents.drop(columns=df_continents.columns.difference(["continentId", "continentName"]), inplace=True)
     df_grouped = pd.merge(df_grouped, df_continents, on="continentId", how="left")
 
-    # Creare il plot
-    # TODO => manca la size in funzione della quantità di teams in quella nazione
     fig = px.scatter_geo(
         df_grouped, 
         locations='code', 
@@ -341,7 +344,7 @@ def createCostructorGeo():
         category_orders = f1db_utils.continents_order,
     ).update_layout(
         f1db_utils.transparent_bg,
-        title = f1db_utils.getTitleObj("Spread of Teams Around the World"),
+        title = f1db_utils.getTitleObj("Distribution of Teams Around the World"),
         margin=f1db_utils.margin_geo
     ).update_traces(
         hoverlabel=f1db_utils.getHoverlabel(13)
@@ -349,6 +352,7 @@ def createCostructorGeo():
     
     return fig
 
+# Create graphs to visualize team trends
 def createConstructorTrend(graph_info, teamName):
     if not teamName: return f1db_utils.warning_empty_dataframe
     
@@ -376,6 +380,13 @@ def createConstructorTrend(graph_info, teamName):
                 markers=True,
                 template=f1db_utils.template,
                 labels=labels_dict,
+                color_discrete_map = {
+                    "Scuderia Ferrari": f1db_utils.F1_RED,
+                    "Red Bull Racing": "#6A76FC",
+                    "McLaren Racing": "#FD8000",
+                    "Mercedes AMG F1": "#00A09C",
+                    "Aston Martin": "#00594F"
+                },
                 hover_data = {
                     "fullName": True
                 }
@@ -395,7 +406,6 @@ def createConstructorTrend(graph_info, teamName):
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             
-            # print(df2['constructorId'].value_counts())
             df.rename(columns={"id":"constructorId"}, inplace=True)
             df2 = pd.merge(df2, df, on="constructorId", how="left")
             
@@ -410,6 +420,13 @@ def createConstructorTrend(graph_info, teamName):
                 markers=True,
                 template=f1db_utils.template,
                 labels=labels_dict,
+                color_discrete_map = {
+                    "Scuderia Ferrari": f1db_utils.F1_RED,
+                    "Red Bull Racing": "#6A76FC",
+                    "McLaren Racing": "#FD8000",
+                    "Mercedes AMG F1": "#00A09C",
+                    "Aston Martin": "#00594F"
+                },
                 hover_data = {
                     "fullName": True
                 }).update_layout(hovermode="x", title=f1db_utils.getTitleObj("Wins Trend"))
@@ -435,7 +452,6 @@ def createConstructorTrend(graph_info, teamName):
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
 
-            # print(df2)
             df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
                 x='date', 
@@ -445,6 +461,13 @@ def createConstructorTrend(graph_info, teamName):
                 markers=True,
                 template=f1db_utils.template,
                 labels=labels_dict,
+                color_discrete_map = {
+                    "Scuderia Ferrari": f1db_utils.F1_RED,
+                    "Red Bull Racing": "#6A76FC",
+                    "McLaren Racing": "#FD8000",
+                    "Mercedes AMG F1": "#00A09C",
+                    "Aston Martin": "#00594F"
+                },
                 hover_data = {
                     "fullName": True
                 }).update_layout(hovermode="x", title=f1db_utils.getTitleObj("Podiums Trend"))
@@ -461,11 +484,3 @@ def createConstructorTrend(graph_info, teamName):
         f1db_utils.transparent_bg
     )
     return fig
-
-"""
-df = getTeamsData()
-    df.sort_values(by='totalRaceWins', ascending=False, inplace=True)
-    if (min_value is None):
-        min_value = 1
-    df = df.loc[df['totalRaceWins'] >= min_value]
-"""

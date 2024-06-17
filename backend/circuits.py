@@ -2,10 +2,6 @@
 # Author    Matteo Naccarato
 
 import pandas as pd
-from datetime import datetime
-from dash import Dash, dcc, html, Input, Output, callback
-import dash_bootstrap_components as dbc
-from collections import defaultdict
 
 import backend.f1db_utils as f1db_utils
 
@@ -41,6 +37,7 @@ not_a_number_replace = {
 
 
 # FUNCTIONS
+# @returns -> circuits dataframe with countries information
 def getCircuits():
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.circuits}")
     df.rename(columns={"id": "circuitId", "name":"circuitName"}, inplace=True)
@@ -53,7 +50,8 @@ def getCircuits():
     return df
 
 
-# UP-LEFT GRAPH
+# UP-LEFT GRAPH (GP Held)
+# @returns -> circuits dataframe which held more races than {minValue}
 def get_gp_held(minValue):
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.circuits}")
     df.sort_values(by=["totalRacesHeld", "name"], ascending=False, inplace=True)
@@ -70,9 +68,11 @@ def get_gp_held(minValue):
     return df
 
 
-# UP-RIGHT GRAPH
+# UP-RIGHT GRAPH (Qualifying vs Race)
+# @returns -> dataframe of selected circuits (only 1 circuit is accepted due to graphical visualization) 
+#               and information about qualifying position and race result of each driver who competed on that circuit
 def get_quali_race(selected_circuits):
-    if len(selected_circuits) != 1: f1db_utils.warning_empty_dataframe # TODO => empty or TOO MANY CIRCUITS, ONLY ONE ALLOWED FOR THIS GRAPH
+    if len(selected_circuits) != 1: f1db_utils.warning_empty_dataframe
     
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.qualifying_results}")
     df.rename(columns={"positionText":"positionQualifying"}, inplace=True)
@@ -98,7 +98,7 @@ def get_quali_race(selected_circuits):
 
     df['positionRace'] = df['positionRace'].replace(not_a_number_replace) 
     df['positionRace'] = pd.to_numeric(df['positionRace'], errors='coerce')
-    df["positionRace"] = df["positionRace"].fillna(-10)
+    df["positionRace"] = df["positionRace"].fillna(f1db_utils.QUALI_FILL_NA)
     df['positionRace'] = df['positionRace'].astype(int)
     df = df[(df["positionRace"] > 0) & (df["positionRace"] < f1db_utils.INFINITE_RESULT - 1)]
 
@@ -106,13 +106,15 @@ def get_quali_race(selected_circuits):
     df["positionQualifying"] = df["positionQualifying"].fillna(f1db_utils.INFINITE_RESULT)
     df['positionQualifying'] = df['positionQualifying'].astype(int)
     max_quali_value = df[df["positionQualifying"] != f1db_utils.INFINITE_RESULT]["positionQualifying"].max()
+    # Replace qualifying NaN (previously replaced with INFINITE) with max real qualifying result + 1
     df["positionQualifying"] = df["positionQualifying"].replace(f1db_utils.INFINITE_RESULT, max_quali_value + 1)
     df = df[df["positionQualifying"] > 0]
     
     return df
     
     
-# BOTTOM GRAPH
+# BOTTOM GRAPH (Pole Lap Time)
+# @returns -> dataframe of selected circuits with pole lap time progress over the years
 def get_qualifying_times(selected_circuits):
     df = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.qualifying_results}")
     
@@ -131,13 +133,15 @@ def get_qualifying_times(selected_circuits):
     df = pd.merge(df, df_drivers_info, on="driverId", how="left")
     df = pd.merge(df, df_circuits, on="circuitId", how="left")
     
+    # Filter by Pole and Selected Circuits
     df = df[f1db_utils.get_p1_mask(df, f1db_utils.PerformanceType.POLES.value)]
     selected_circuits_mask = df["circuitId"].isin(selected_circuits)
     df = df[selected_circuits_mask]
+    # Merge different types of Qualifying format ({time} and {q3})
     df["time"] = df["time"].fillna(df["q3"])
     df["timeMillis"] = df["timeMillis"].fillna(df["q3Millis"])
-    df.reset_index(inplace=True)
     
+    df.reset_index(inplace=True)
     df.drop(columns=df.columns.difference(["year", "driverId", "driverName", "time", "timeMillis", "circuitId", "circuitName", "grandPrixId", "officialName", "qualifyingFormat"]), inplace=True)
     
     return df

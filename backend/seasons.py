@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import os
 from datetime import datetime
 import backend.f1db_utils as f1db_utils
+import frontend.drivers
 
 # selezione anni -> prendo piloti in quegli anni e si vede come variano nel tempo i piazzamenti finali
 # numero di gp fatti
@@ -63,7 +64,6 @@ def getGeoDataGp():
 
 
 
-
 # FUNCTIONS | PLOTS
 
 # UP-LEFT GRAPH | Number of GP Over the Years
@@ -100,8 +100,11 @@ def createSeasonGeo():
 
     df_count = gp_count_for_year.reset_index()
     df_count.columns = ['grandPrixId', 'value']
+
+    # Create a new dataframe to store data of interest from different dfs
     df = pd.DataFrame(columns=['id', 'number_gps', 'continent', 'code'])
     
+    # Storage country, alpha3Code and continent
     for index, value in df_count['grandPrixId'].items():
         countryId = df2.loc[df2['id'] == value, "countryId"].iloc[0]
         alpha3Code = df3.loc[df3['id'] == countryId, "alpha3Code"]
@@ -110,18 +113,20 @@ def createSeasonGeo():
             if not continent.empty:
                 alpha3Code = alpha3Code.iloc[0]
                 continent = continent.iloc[0]
+                # Add the row to the new df
                 df = df._append({
                     'id': value, 
                     'number_gps': df_count.loc[df_count['grandPrixId'] == value, "value"].iloc[0], 
                     'continent': continent, 
                     'code': alpha3Code
                 }, ignore_index=True)
-        
+            
     df['number_gps'] = df['number_gps'].astype(str).astype(int)
     
     df_grands_prix = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.grands_prix}")
     df_grands_prix.drop(columns=df_grands_prix.columns.difference(["id", "fullName"]), inplace=True)
     df_grands_prix.rename(columns={"fullName":"grand_prix_fullName"},inplace=True)
+    
     df = pd.merge(df, df_grands_prix, on="id", how="left")
     df_grouped = df.groupby('code', as_index=False).agg({
         'id': lambda x: '<br> '.join(map(str, x)),
@@ -140,7 +145,8 @@ def createSeasonGeo():
     
     df_grouped = pd.merge(df_grouped, df_countries, on="code", how="left")
     df_grouped = pd.merge(df_grouped, df_continents, on="continent", how="left")
-        
+    
+    # Create scatter plot geo
     return px.scatter_geo(df_grouped, 
         locations="code", 
         size="number_gps", 
@@ -174,9 +180,13 @@ def createSeasonGeo():
 # BOTTOM GRAPH
 def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[1985, 1995], driver=['']):
     data = getSeasonDrivingStanding()
+    
+    # If there is only one element, transform it into a list
+    # (.isin() only accepts a list)
     if isinstance(driver, str):
         driver = [driver]
    
+   # Range in which to display the data
     data_in_range = data.loc[(data["year"] >= slider_value[0]) & (data["year"] <= slider_value[1])]
     
     selected_drivers_mask = data_in_range["driverId"].isin(driver)
@@ -190,12 +200,14 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
     data_in_range = pd.merge(data_in_range, df_drivers_info, on="driverId", how="left")
     
     title = "Positions" if radio_button_value == "positionNumber" else "Points"
+    # Create the line chart
     fig = px.line(data_in_range, 
         x="year", 
         y=radio_button_value,  
         color="driverName", 
         labels = labels_dict,
         color_discrete_sequence=f1db_utils.custom_colors,
+        color_discrete_map = frontend.drivers.drivers_color_map,
         template = f1db_utils.template,
         hover_data = { "driverName": True }
     ).update_layout(
@@ -223,24 +235,20 @@ def createSeasonDriverPlot(radio_button_value="positionNumber", slider_value=[19
 
     
 
-
 # HTML Elements
 def createRadioButtonDriver():
     return dbc.RadioItems(
             # Sono le 3 opzioni
             options=[
-                {"label":"Position", "value":"positionNumber"}, # opzione boxplot
+                {"label":"Position", "value":"positionNumber"},
                 {"label":"Points", "value":"points"}
             ],
-            # Impostiamo il valore di default
             value="positionNumber",
-            # inline = True mette i 3 bottoni in linea invece che verticale
-            #inline=True,
             id="radio-input",
             className="d-flex flex-column justify-content-start"
-            #style={'marginLeft': 7, 'marginTop': 10}
     )
 
+# Create the slider
 def createRangeSlider():
     dict1 = {str(year): str(year) for year in range(1950, datetime.now().year + 1, 10)}
     dict2 = {str(datetime.now().year) : str(datetime.now().year)}
@@ -254,6 +262,7 @@ def createRangeSlider():
         id='range-slider',
     )
 
+# Create dropdown
 def createDropDownDrivers(slider_value=[1985, 1995]):
     data = getSeasonDrivingStanding()
 
@@ -266,19 +275,16 @@ def createDropDownDrivers(slider_value=[1985, 1995]):
     
     selected_drivers_mask = df_drivers_info["driverId"].isin(data_in_range) 
     df_drivers_info = df_drivers_info[selected_drivers_mask]
-    # print(df_drivers_info)
     
     return dcc.Dropdown(
         id='dropdown_drivers',
         options = [{"label":row["driverName"], "value": row["driverId"]} for row in df_drivers_info.to_dict(orient="records") ],
-        #options = [{'label': value, 'value': value} for value in data_in_range ],
         multi=True,
         placeholder="Select a Driver",
-        #style={'marginBottom': 10, 'marginTop': 20, 'text-align': 'center'},
         value=['ayrton-senna', 'alain-prost']
     )
 
-
+# Update dropdown
 def updateDropDownDrivers(slider_value): 
     df_seasons_drivers_standings = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.seasons_driver_standings}")
     df_seasons_drivers_standings.drop(columns=df_seasons_drivers_standings.columns.difference(["year","driverId"]), inplace=True)
@@ -295,8 +301,8 @@ def updateDropDownDrivers(slider_value):
     
     return [{"label":row["driverName"], "value": row["driverId"]} for row in data.to_dict(orient="records")]
     
-    
-def crateDriverElement(slider_value):
+
+def crateDriverElement(slider_value = [1985, 1995]):
     if (slider_value is None):
         slider_value = [1985, 1995]
     return dbc.Row([

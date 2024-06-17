@@ -22,6 +22,7 @@ seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 
 MONTH_END_SEASON = 12
 INFINITE_RESULT = 100
+QUALI_FILL_NA = -10
 HOVERLABEL_FONT_SIZE_DEFAULT = 16
 F1_RED = "rgb(247,1,0)"
 
@@ -34,6 +35,9 @@ class PerformanceType(Enum):
     
     
 # ===============UI=====================
+template = "plotly_dark"
+margin=dict(l=20, r=20, t=50, b=30)
+margin_geo=dict(t=60, b=0)
 custom_colors = px.colors.qualitative.Light24.copy()
 custom_colors[0] = F1_RED
 
@@ -48,18 +52,6 @@ transparent_bg = {
     "paper_bgcolor": "rgba(0,0,0,0)"
 }
 
-margin=dict(l=20, r=20, t=50, b=30)
-margin_geo=dict(t=60, b=0)
-
-# ===========================================
-
-
-    
-
-# ==================FIGURES==================
-
-template = "plotly_dark"
-    
 warning_empty_dataframe = {
     "layout": {
         "xaxis": {"visible": False},
@@ -76,6 +68,20 @@ warning_empty_dataframe = {
     }
 }
 
+continents_order = {
+    "continentId": ['africa', 'antarctica', 'asia', 'australia', 'europe', 'north-america', 'south-america'],
+    "continentName": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
+}
+
+update_geos = dict(
+    bgcolor="rgba(0,0,0,0)",
+    showland=True, 
+    landcolor="rgb(200,212,227)",
+    projection_type='orthographic',
+    showcoastlines=True,
+    resolution=50 # Slow but otherwise (resolution = 110), smaller countries (e.g. Monaco) will not be displayed
+)
+
 def getTitleObj(titleStr):
     return {
         "text": titleStr,
@@ -91,25 +97,7 @@ def getHoverlabel(fontSize = HOVERLABEL_FONT_SIZE_DEFAULT):
         font_size=fontSize,
     )
 
-continents_order = {
-    "continentId": ['africa', 'antarctica', 'asia', 'australia', 'europe', 'north-america', 'south-america'],
-    "continentName": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
-}
-
-update_geos = dict(
-    bgcolor="rgba(0,0,0,0)",
-    showland=True, 
-    landcolor="rgb(200,212,227)",
-    projection_type='orthographic',
-    showcoastlines=True,
-    resolution=50 # Slow but otherwise (resolution = 110), smaller countries (e.g. Monaco) will not be displayed
-)
-
 # ===========================================
-
-
-
-
 
 
 # ==================FUNCTIONS==================
@@ -122,7 +110,6 @@ def order_df(df_input, order_by, order):
         df_append=df_input[df_input[order_by]==var].copy()
         df_output = pd.concat([df_output, df_append])
     return(df_output)
-
 
 def currentSeasonCheckMask(df, performanceType):
     return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS.value else True
@@ -142,11 +129,5 @@ def ms_to_time(ms):
     seconds = int((ms % 60000) // 1000)
     milliseconds = int(ms % 1000)
     return f"{minutes}:{seconds:02}:{milliseconds:03}"
-
-# ===========================================
-
-
-# ==================DRIVERS==================
-
 
 # ===========================================

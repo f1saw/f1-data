@@ -6,6 +6,7 @@ gh_latest_release = 'https://api.github.com/repos/f1db/f1db/releases/latest'
 folder = 'f1db-csv'
 last_version_file = "f1db_last_version_file.txt"
 
+# Download and extract from {url} to {folder}
 def download(url, last_version):
     print(f"f1-data > Downloading\t({last_version})")
     r = requests.get(url)
@@ -14,7 +15,8 @@ def download(url, last_version):
     with open(last_version_file, 'w') as file:
         file.write(last_version)
         print(f"f1-data > Successfully Downloaded\t({last_version})")
-                
+
+# Get Data only if a new version is available                
 def get_data():
     response = requests.get(gh_latest_release)
     last_version = response.json()["name"]

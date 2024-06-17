@@ -9,6 +9,8 @@ import dash_bootstrap_components as dbc
 import backend.f1db_utils as f1db_utils
 import backend.drivers as drivers
 
+NOT_QUALIFIED = "NQ"
+
 # ======Handle hovertemplate accurately======
 MAX_ELEMENTS_TO_DISPLAY = 5
 def format_race_driver_info(race_driver_info):
@@ -29,17 +31,18 @@ def format_driver_info(driver_info):
     
     
 # DRIVERS' world figure update (formatting)
-driver_info = drivers.drivers_dfs["worldSpread"].groupby(['nationalityCountryId','year']).apply(
+driver_info = drivers.dfs["worldSpread"].groupby(['nationalityCountryId','year']).apply(
     lambda x: [{'driverName': row['driverName']} for idx, row in x.iterrows()]
 ).reset_index(name='driverInfo')
-drivers.drivers_dfs["worldSpread"] = pd.merge(drivers.drivers_dfs["worldSpread"], driver_info, on=['nationalityCountryId','year'], how="left")
-drivers.drivers_dfs["worldSpread"]['driverInfo'] = drivers.drivers_dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
-drivers.drivers_dfs["worldSpread"].sort_values(by="year", inplace=True)
+drivers.dfs["worldSpread"] = pd.merge(drivers.dfs["worldSpread"], driver_info, on=['nationalityCountryId','year'], how="left")
+drivers.dfs["worldSpread"]['driverInfo'] = drivers.dfs["worldSpread"]['driverInfo'].apply(format_driver_info)
+drivers.dfs["worldSpread"].sort_values(by="year", inplace=True)
 
 # ====================DRIVERs STATIC FIGURES'=======================
 drivers_figures = {
+    # UP-LEFT GRAPH (Number of Drivers)
     "numDriversPerYear" : px.line(
-        drivers.drivers_dfs["numDriversPerYear"],
+        drivers.dfs["numDriversPerYear"],
         x = "year",
         y = ["officialDriver","testDriver"],
         markers = True,
@@ -64,8 +67,9 @@ drivers_figures = {
         hoverlabel = f1db_utils.getHoverlabel(13),
         hovertemplate="<b>%{y}</b><extra></extra>"
     ),
+    # UP-RIGHT GRAPH (Distribution of Drivers' Nationalities)
     "worldSpread": px.scatter_geo(
-        drivers.drivers_dfs["worldSpread"], 
+        drivers.dfs["worldSpread"], 
         locations = "alpha3Code", 
         color = "continentName",
         hover_name = "countryName", 
@@ -95,7 +99,7 @@ drivers_figures = {
     ).update_layout(
         f1db_utils.transparent_bg,
         margin=f1db_utils.margin_geo,
-        title = f1db_utils.getTitleObj("Spread of Drivers' Nationalities Over the Years"),
+        title = f1db_utils.getTitleObj("Distribution of Drivers' Nationalities Over the Years"),
     ).update_geos(f1db_utils.update_geos)
 }
 
@@ -151,7 +155,18 @@ drivers_performance_dropdown = dcc.Dropdown(
     clearable=False,
     multi=True,
     maxHeight=200,
-    value=["lewis-hamilton","max-verstappen","sebastian-vettel"] # TODO => look for something cool
+    value=["lewis-hamilton","max-verstappen","sebastian-vettel"]  # "michael-schumacher"] 
 )    
+
+drivers_color_map = {
+    "Lewis Hamilton": "#D626FF",
+    "Sebastian Vettel": "#F6F926",
+    "Max Verstappen": "#6A76FC",
+    "Charles Leclerc": f1db_utils.F1_RED,
+    "Michael Schumacher": "rgb(228,26,28)",
+    "Alain Prost": "#EB000F",
+    "Ayrton Senna": "#00FD35",
+    "Lando Norris": "#FD8000"
+}
 
 # ===========================================

@@ -1,10 +1,7 @@
 # File      FRONTEND | CIRCUITS
 # Author    Matteo Naccarato
 
-import pandas as pd
-import plotly.express as px
 from dash import dcc
-import dash_bootstrap_components as dbc
 
 import backend.f1db_utils as f1db_utils
 import backend.circuits as circuits

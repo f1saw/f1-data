@@ -54,7 +54,7 @@ app.layout = html.Div([
             }),
         html.Div(id='tabs-content-graph')
     ], className="d-flex flex-column-reverse justify-content-between vh-98"),
-], className="px-2 bg-dark vh-100") # overflow-hidden
+], className="px-2 bg-dark vh-100")
 
 
 ## CALLBACKS
@@ -75,7 +75,7 @@ def render_content(tab):
                 html.Br(),
                 dbc.Row([
                     html.Div(
-                        seasons.crateDriverElement([1950, 1955]), # TODO => rimuovere questi parametri ??
+                        seasons.crateDriverElement(),
                         id="range_div"
                     ),
                     dbc.Row(dbc.Col(dcc.Graph(id="season_graph", className="h-100")))
@@ -94,7 +94,6 @@ def render_content(tab):
                     ], className="h-100"), width=6),
                     dbc.Col(dcc.Graph(id="circuits-quali-race-results", className="h-100"), width=6)
                 ], className="graph-section-circuits"),
-                #html.Br(),
                 html.Br(),
                 dbc.Stack([
                     dbc.Row([
@@ -141,7 +140,7 @@ def render_content(tab):
                                     ]),
                                     frontend.drivers.drivers_performance_min_value 
                                 ], id="drivers-min-value-id", width=12),
-                                dbc.Col(frontend.drivers.drivers_performance_dropdown, width=12, style={"max-width":"50px;"})
+                                dbc.Col(frontend.drivers.drivers_performance_dropdown, width=12, style={"max-width":"100px;"})
                             ])
                         ], className="d-flex gap-4"),
                     ]),
@@ -154,7 +153,6 @@ def render_content(tab):
         # TEAMS
         case 'tab-3-teams':
             return html.Div([
-                #html.Hr(),
                 dbc.Row([
                     dbc.Col(dcc.Graph(id="entrants_teams_graph", figure=teams.creteNumTeamsEntrantsForYear(), className="h-100"), width=6),
                     dbc.Col(dcc.Graph(id="geo_teams_graph", figure=teams.createCostructorGeo(), className="h-100"), width=6)
@@ -207,7 +205,6 @@ def update_dropdown(slider_value):
                Input('dropdown_drivers', 'value'),
                Input('dropdown_drivers', 'options')])
 def update_graph(radio_value, range_value, driver, option):
-    # print(option[0]['value'])
     if(driver == []):
         driver = [option[0]['value'], option[3]['value']]
     return seasons.createSeasonDriverPlot(radio_value, range_value, driver) 
@@ -231,7 +228,7 @@ def circuits_update_slider_marks(figure):
     return [circuits_vars["gp_held_max"], {1:"1", str(circuits_vars["gp_held_max"]):str(circuits_vars["gp_held_max"])}]
 
 
-# UP-LEFT GRAPH
+# UP-LEFT GRAPH (GP Held)
 @app.callback(
     Output("circuits-gp-held", "figure"),
     Input("circuits-gp-held-min-value-id", "value")
@@ -255,7 +252,7 @@ def circuits_update_gp_held(min_value):
         color_discrete_sequence =[f1db_utils.podium_colors["count_position_2"]]
     ).update_layout(
         f1db_utils.transparent_bg,
-        title = f1db_utils.getTitleObj("Number GP Helds by Circuits"),
+        title = f1db_utils.getTitleObj("Number of GP Held by Circuit"),
         hovermode = "x",
         margin=f1db_utils.margin
     ).update_traces(
@@ -263,11 +260,10 @@ def circuits_update_gp_held(min_value):
         hovertemplate="<b>%{y}</b>, %{customdata[1]}<br>Type: %{customdata[2]}<extra></extra>"
     ) if not df.empty else f1db_utils.warning_empty_dataframe
     
-    
     return fig
 
 
-# UP-RIGHT GRAPH
+# UP-RIGHT GRAPH (Qualifying vs Race)
 @app.callback(
     [Output("circuits-quali-race-range-id", "min"),
     Output("circuits-quali-race-range-id", "max")],
@@ -285,8 +281,9 @@ def circuits_update_quali_race(figure):
      Input("circuits-quali-race-range-id", "value")]
 )
 def circuits_update_quali_race(circuitsId, qualiRange):
-    if len(circuitsId) == 0: return f1db_utils.warning_empty_dataframe
+    if len(circuitsId) != 1: return f1db_utils.warning_empty_dataframe
 
+    # Update data to properly set the upper bound of the Qualifying Position slider 
     global circuits_vars
     df = circuits.get_quali_race(circuitsId)
     circuits_vars["quali_race_range_min"] = df["positionQualifying"].min()
@@ -295,25 +292,27 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     # Filter by Qualifying Position Range
     df = df[df['positionQualifying'].isin(list(range(int(qualiRange[0]), int(qualiRange[1])+1)))] 
     df.sort_values(by="raceId", inplace=True, ascending=False)
-    
+
+    # Compute frequency values    
     total_qualifying = df['positionQualifying'].value_counts().reset_index()
     total_qualifying.columns = ['positionQualifying', 'total']
-
     freq_df = df.groupby(['positionQualifying', 'positionRace']).size().reset_index(name='count')
     freq_df = pd.merge(freq_df, total_qualifying, on='positionQualifying')
+    freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
     
+    # Customize hoverlabel info with offical GP name and Driver info who achieved the pole
     race_driver_info = df.groupby(['positionQualifying', 'positionRace']).apply(
         lambda x: [{'officialName': row['officialName'], 'driverName': row['driverName']} for idx, row in x.iterrows()]
     ).reset_index(name='raceDriverInfo')
     freq_df = pd.merge(freq_df, race_driver_info, on=['positionQualifying', 'positionRace'])
     freq_df['raceDriverInfo'] = freq_df['raceDriverInfo'].apply(frontend.drivers.format_race_driver_info)
-    freq_df['count_per_total'] = freq_df['count'] / freq_df['total'] * 100
     
     freq_df.reset_index(inplace=True)
     freq_df.drop(columns=["index"], inplace=True)
     
+    # X-axis values
     tickvals = np.linspace(circuits_vars["quali_race_range_min"], circuits_vars["quali_race_range_max"], circuits_vars["quali_race_range_max"])
-    ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else "NQ" for val in tickvals]
+    ticktext = [val if val < (circuits_vars["quali_race_range_max"]) else frontend.drivers.NOT_QUALIFIED for val in tickvals]
                  
     fig = px.scatter(freq_df, 
         x = 'positionQualifying', 
@@ -339,10 +338,10 @@ def circuits_update_quali_race(circuitsId, qualiRange):
     )
     fig.data[0].customdata = freq_df[['total', 'count_per_total', 'raceDriverInfo']].values
     
-    return fig if len(circuitsId) == 1 else f1db_utils.warning_empty_dataframe 
+    return fig 
 
 
-# BOTTOM GRAPH
+# BOTTOM GRAPH (Pole Lap Time)
 @app.callback(
     Output("circuits-qualifying", "figure"),
      Input("circuits-dropdown", "value")
@@ -354,6 +353,7 @@ def circuits_update_qualifying(circuitsIds):
     df = circuits.get_qualifying_times(circuitsIds)
     df = f1db_utils.order_df(df, "circuitId", circuitsIds)
     
+    # Y-axis values
     tickvals = np.logspace(np.log10(df['timeMillis'].min()), np.log10(df['timeMillis'].max()), num=5, base=10)
     ticktext = [f1db_utils.ms_to_time(val) for val in tickvals]
     return px.line(
@@ -394,7 +394,6 @@ def circuits_update_qualifying(circuitsIds):
 
 
 
-
 # =================3================= DRIVERS by Matteo Naccarato
 # IF "absolute" graph => HIDE drivers dropdown | SHOW min value slider
 # IF "trend"    graph => SHOW drivers dropdown | HIDE min value slider
@@ -421,7 +420,7 @@ def update_drivers_dropdown(performance_type):
     ]
 
 
-# BOTTOM GRAPH
+# BOTTOM GRAPH (Drivers' WDCs / Wins / Podiums / Poles)
 @app.callback(
     [Output("drivers-performance", "figure"),
      Output("drivers-performance-min-value-id", "max"),
@@ -437,7 +436,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
     max_val = 0
     if (graph_type == "absolute"):
         if (performance_type == drivers.PERFORMANCE_TYPE_DEFAULT and min_value == drivers.MIN_VALUE_DEFAULT):
-            df = drivers.drivers_dfs["absolutePerformance"] # standard values, use the one already computed
+            df = drivers.dfs["absolutePerformance"] # standard values, use the one already computed
         else:
             df = drivers.getAbsolutePerformance(
                 performance_type, 
@@ -445,13 +444,9 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 "count_podiums" if performance_type == f1db_utils.PerformanceType.PODIUMS.value else "count_position_1"
             )
         
-        
         title = f"Most F1 {drivers.labels_dict[performance_type]}"
         match performance_type:
             case f1db_utils.PerformanceType.WDCS.value | f1db_utils.PerformanceType.WINS.value | f1db_utils.PerformanceType.POLES.value:
-                # Keep only 1st place results, already done with poles
-                if performance_type != f1db_utils.PerformanceType.POLES.value:
-                    df = df[df["count_position_1"] != 0] 
                 df.sort_values(by=["count_position_1"], ascending=False, inplace=True)         
                 y = "count_position_1"
                 drivers.labels_dict["count_position_1"] = f"Number of {drivers.labels_dict[performance_type]}"
@@ -529,6 +524,7 @@ def update_drivers_performance(graph_type, performance_type, min_value, selected
                 labels = drivers.labels_dict,
                 hover_data = hover_data,
                 color_discrete_sequence=f1db_utils.custom_colors,
+                color_discrete_map = frontend.drivers.drivers_color_map,
                 template = f1db_utils.template
             ).update_layout(
                 f1db_utils.transparent_bg,
