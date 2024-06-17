@@ -12,10 +12,6 @@ from datetime import datetime
 import backend.f1db_utils as f1db_utils
 import frontend.drivers
 
-# selezione anni -> prendo piloti in quegli anni e si vede come variano nel tempo i piazzamenti finali
-# numero di gp fatti
-# mappa dei circuiti -> per ogni anno mostrare dove sono stati fatti i GP
-
 labels_dict = {
     "year": "Year",
     "continentName": "Continent",
