@@ -133,7 +133,6 @@ def getAbsolutePerformance(performanceType, minValue, colToApplyMin):
     df_drivers_info.drop(columns=df_drivers_info.columns.difference(["driverId", "driverName"]), inplace=True)
     df.drop(columns=df.columns.difference(["positionNumber","driverId","year"]), inplace=True)
     
-    # 
     match performanceType:
         # 1st, 2nd, 3rd places only
         case f1db_utils.PerformanceType.PODIUMS.value:
