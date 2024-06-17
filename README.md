@@ -1,7 +1,7 @@
 # F1-DATA
 <hr>
 Dashboard to Analyze data about Formula 1.
-For a proper presentation we suggest to view [F1 DATA](./F1-ARD.pdf)
+For a proper presentation we suggest to view [F1 DATA](./F1_ARD.pdf)
 
 <hr>
 
