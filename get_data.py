@@ -8,7 +8,7 @@ last_version_file = "f1db_last_version_file.txt"
 
 # Download and extract from {url} to {folder}
 def download(url, last_version):
-    print(f"f1-data > Downloading\t({last_version})")
+    print(f"f1-data > Downloading\t\t\t({last_version})")
     r = requests.get(url)
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     zf.extractall(folder)
