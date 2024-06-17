@@ -195,7 +195,7 @@ def getTrendPerformance(selected_drivers, performanceType):
     if performanceType == f1db_utils.PerformanceType.WDCS.value: 
         df = df[f1db_utils.currentSeasonCheckMask(df, performanceType)]
     else:
-        df = df[performanceType2Mask(df, performanceType)] # show the marker only when he achieved the result 
+        df = df[performanceType2Mask(df, performanceType)] # show the marker only when the driver achieved the result 
         
     df.reset_index(inplace=True)
     match performanceType:
