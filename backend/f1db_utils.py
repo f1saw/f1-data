@@ -21,6 +21,7 @@ seasons_driver_standings = "f1db-seasons-driver-standings.csv"
 seasons_entrants_drivers = 'f1db-seasons-entrants-drivers.csv'
 
 MONTH_END_SEASON = 12
+DAY_END_SEASON = 15
 INFINITE_RESULT = 100
 QUALI_FILL_NA = -10
 HOVERLABEL_FONT_SIZE_DEFAULT = 16
@@ -112,7 +113,7 @@ def order_df(df_input, order_by, order):
     return(df_output)
 
 def currentSeasonCheckMask(df, performanceType):
-    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS.value else True
+    return (df["year"] < datetime.now().year) | ((datetime.now().month >= MONTH_END_SEASON) & (datetime.now().day >= DAY_END_SEASON)) if performanceType == PerformanceType.WDCS.value else True
 
 def get_p1_mask(df, performanceType):
     # If "WDCS" , current year must not count as won world driver championship, to take into account the data:
@@ -120,7 +121,7 @@ def get_p1_mask(df, performanceType):
     #       (e.g. 1975 < 2024 | OK)
     #       (e.g. 2024 < 2024 | NOT OK, season still running)
     # OR - current month must be at the end of the season (e.g. in decemeber)
-    #       (e.g. season 2024 , current date Dec 2024 | OK, same year but season is over)
+    #       (e.g. season 2024 , current date 15 Dec 2024 | OK, same year but season is over)
     return (df["positionNumber"] == 1.0) & currentSeasonCheckMask(df, performanceType)
 
 # Funzione per convertire millisecondi in "minutes:seconds:milliseconds"
