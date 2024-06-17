@@ -1,5 +1,4 @@
 # F1-DATA
-<hr>
 Dashboard to Analyze data about Formula 1.
 For a proper presentation we suggest to view <a href="https://github.com/f1saw/f1-data/blob/main/F1-ARD.pdf">F1-ARD</a>
 
@@ -8,7 +7,6 @@ For a proper presentation we suggest to view <a href="https://github.com/f1saw/f
 ### How
 Python<br>
 [f1db](https://github.com/f1db/f1db) (dataset)
-<hr>
 
 ### USAGE
 - ```pip install pandas plotly dash dash_bootstrap_components```
