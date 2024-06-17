@@ -179,7 +179,9 @@ def getTrendPerformance(selected_drivers, performanceType):
     
     selected_drivers_mask = df["driverId"].isin(selected_drivers) 
     df = df[selected_drivers_mask]
-    if performanceType != f1db_utils.PerformanceType.WDCS.value: # show only when he achieved the result as a marker (if it is not a WDC)
+    if performanceType == f1db_utils.PerformanceType.WDCS.value: # show only when he achieved the result as a marker (if it is not a WDC)
+        df = df[f1db_utils.currentSeasonCheckMask(df, performanceType)]
+    else:
         df = df[performanceType2Mask(df, performanceType)]
         
     df.reset_index(inplace=True)

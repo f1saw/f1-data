@@ -212,8 +212,13 @@ def createTotalPodiumPlot(min_value = 1):
     df3 = df3[df3['id'].isin(df2['raceId'])]
     df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
     df2 = df2['constructorId'].value_counts().reset_index()
-    df2.columns = ['name', 'totalPodiums']
+    df2.columns = ['constructorId', 'totalPodiums']
     df2 = df2.loc[df2['totalPodiums']>= min_value]
+    
+    df_constructors_info = pd.read_csv(f"{f1db_utils.folder}/{f1db_utils.constructors}")
+    df_constructors_info.rename(columns={"id":"constructorId"}, inplace=True)
+    df_constructors_info.drop(columns=df_constructors_info.columns.difference(["constructorId", "fullName"]), inplace=True)
+    df2 = pd.merge(df2, df_constructors_info, on="constructorId", how="left")
     """
     df = getTeamsData()
     df.sort_values(by='totalPodiums', ascending=False, inplace=True)
@@ -222,7 +227,7 @@ def createTotalPodiumPlot(min_value = 1):
     # print(min_value)
     df = df.loc[df['totalPodiums'] >= min_value]
     """
-    fig = px.bar(df2, x='name', y='totalPodiums',
+    fig = px.bar(df2, x='fullName', y='totalPodiums',
                 color_discrete_sequence =[f1db_utils.podium_colors["count_position_1"]]*len(df2),
                 color_discrete_map=f1db_utils.podium_colors,
                 category_orders = {"y": ["count_position_1", "count_position_2", "count_position_3"]},
@@ -382,7 +387,7 @@ def createConstructorTrend(graph_info, teamName):
             df2 =df2.loc[df2['positionNumber'] == 1].reset_index()
             df2['RowNumber'] = df2.groupby('constructorId').cumcount() + 1
             
-            print(df2['constructorId'].value_counts())
+            # print(df2['constructorId'].value_counts())
             df.rename(columns={"id":"constructorId"}, inplace=True)
             df2 = pd.merge(df2, df, on="constructorId", how="left")
             
@@ -422,7 +427,7 @@ def createConstructorTrend(graph_info, teamName):
             df3 = df3[df3['id'].isin(df2['raceId'])]
             df2 = df2.merge(df3, left_on='raceId', right_on='id', how='left')
 
-            print(df2)
+            # print(df2)
             df2 = f1db_utils.order_df(df2, "constructorId", teamName)
             fig = px.line(df2, 
                 x='date', 

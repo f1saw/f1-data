@@ -8,6 +8,7 @@ import plotly.express as px
 
 folder = 'f1db-csv'
 
+constructors = 'f1db-constructors.csv'
 continents = 'f1db-continents.csv'
 countries = 'f1db-countries.csv'
 circuits = 'f1db-circuits.csv'
@@ -124,7 +125,7 @@ def order_df(df_input, order_by, order):
 
 
 def currentSeasonCheckMask(df, performanceType):
-    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS else True
+    return (df["year"] < datetime.now().year) | (datetime.now().month >= MONTH_END_SEASON) if performanceType == PerformanceType.WDCS.value else True
 
 def get_p1_mask(df, performanceType):
     # If "WDCS" , current year must not count as won world driver championship, to take into account the data:

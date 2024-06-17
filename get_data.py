@@ -7,18 +7,18 @@ folder = 'f1db-csv'
 last_version_file = "f1db_last_version_file.txt"
 
 def download(url, last_version):
-    print(f"f1-data > Downloading | {last_version}")
+    print(f"f1-data > Downloading\t({last_version})")
     r = requests.get(url)
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     zf.extractall(folder)
     with open(last_version_file, 'w') as file:
         file.write(last_version)
-        print(f"f1-data > Successfully Downloaded | {last_version}")
+        print(f"f1-data > Successfully Downloaded\t({last_version})")
                 
 def get_data():
     response = requests.get(gh_latest_release)
     last_version = response.json()["name"]
-    print(f"f1-data > FETCHING VERSION {last_version}")
+    print(f"f1-data > Fetching Version\t({last_version})")
     url = f'https://github.com/f1db/f1db/releases/download/{last_version}/f1db-csv.zip'
 
     try:
@@ -26,7 +26,7 @@ def get_data():
             content = file.read().strip()
         
         if content == last_version:
-            print(f"f1-data > Already up to date | {last_version}")
+            print(f"f1-data > Already up to date\t({last_version})")
         else:
             download(url, last_version)
 
