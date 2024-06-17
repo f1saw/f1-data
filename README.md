@@ -24,13 +24,13 @@ Python
 <hr>
 
 #### SEASONS
-![Seasons](./assets/images/seasons.png)
+![Seasons](./assets/images/seasons.PNG)
 
 #### CIRCUITS
-![Circuits](./assets/images/circuits.png)
+![Circuits](./assets/images/circuits.PNG)
 
 #### DRIVERS
-![Drivers](./assets/images/drivers.png)
+![Drivers](./assets/images/drivers.PNG)
 
 #### TEAMS
-![Teans](./assets/images/teams.png)
+![Teans](./assets/images/teams.PNG)
