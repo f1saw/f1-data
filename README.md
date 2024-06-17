@@ -6,7 +6,8 @@ For a proper presentation we suggest to view <a href="https://github.com/f1saw/f
 <hr>
 
 ### How
-Python
+Python<br>
+[f1db](https://github.com/f1db/f1db) (dataset)
 <hr>
 
 ### USAGE
@@ -15,11 +16,6 @@ Python
 - ```cd f1-data```
 - ```python dashboard.py```
 - Go to ```http://127.0.0.1:8050/```
-
-<hr>
-
-### DATASET
-[f1db](https://github.com/f1db/f1db)
 
 <hr>
 
