@@ -105,7 +105,7 @@ def createDropdown(radio_value = 'win'):
     return dcc.Dropdown(
         id='dropdown',
         options=[{"label":row["fullName"], "value": row["id"]} for row in df.to_dict(orient="records")],
-        value=df['id'].iloc[0],
+        value=["ferrari", "mclaren"],
         multi=True,
         style={'marginBottom': 10, 'marginTop': 2, 'text-align': 'center'}
     )
